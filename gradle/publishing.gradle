@@ -1,0 +1,70 @@
+buildscript {
+	repositories {
+		jcenter()
+	}
+	dependencies {
+		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.1'
+	}
+}
+
+//apply plugin: 'com.jfrog.bintray'
+apply plugin: com.jfrog.bintray.gradle.BintrayPlugin
+
+task groovydocJar(type: Jar, dependsOn: groovydoc) {
+	classifier = 'groovydoc'
+	from groovydoc.destinationDir
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+build.dependsOn sourcesJar
+build.dependsOn groovydocJar
+
+
+bintray {
+
+	user = project.hasProperty( 'bintray_user' ) ? project.getProperty( 'bintray_user') : null
+	key = project.hasProperty( 'bintray_api_key') ? project.getProperty('bintray_api_key') : null
+
+	publications = ['mavenJava']
+
+	dryRun = false //Whether to run this as dry-run, without deploying
+	publish = true //If version should be auto published after an upload
+
+	pkg {
+		repo = 'tbc'
+		name = 'tbc'
+
+		desc = 'tbc'
+		websiteUrl = 'tbc'
+		issueTrackerUrl = 'tbc'
+		vcsUrl = 'tbc'
+		licenses = ['MIT']
+		labels = ['sonar', 'sonarqube']
+		publicDownloadNumbers = true
+
+		version {
+			name = project.version
+			vcsTag = project.version
+		}
+	}
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+
+			artifact sourcesJar {
+				classifier "sources"
+			}
+
+			artifact groovydocJar {
+				classifier "groovydoc"
+			}
+		}
+	}
+}
