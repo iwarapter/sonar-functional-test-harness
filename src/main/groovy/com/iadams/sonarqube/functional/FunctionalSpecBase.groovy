@@ -143,4 +143,16 @@ class FunctionalSpecBase extends Specification {
 	void theFollowingFileMetricsHaveTheFollowingValue(String file ,Map<String, Float> metrics_to_query){
 		SonarWebServiceAPI.containsMetrics(SONAR_URL, "$moduleName:$file", metrics_to_query.sort())
 	}
+
+	void deactivateAllRules(String language, String profile){
+		SonarWebServiceAPI.deactivateAllRules(SONAR_URL, language, profile)
+	}
+	
+	void resetDefaultProfile(String language){
+		SonarWebServiceAPI.resetDefaultProfile(SONAR_URL, language)
+	}
+
+	void activateRepositoryRules(String language, String profile, String repository){
+		SonarWebServiceAPI.activateRepositoryRules(SONAR_URL, language, profile, repository)
+	}
 }

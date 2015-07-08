@@ -93,4 +93,24 @@ class FunctionalSpec extends FunctionalSpecBase {
 		then:
 		theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc:5, lines:7])
 	}
+
+	def "we can change profile configurations"(){
+		when:
+		deactivateAllRules('java', 'Sonar way')
+
+		then:
+		noExceptionThrown()
+
+		when:
+		activateRepositoryRules('java', 'Sonar way', 'common-java')
+
+		then:
+		noExceptionThrown()
+
+		when:
+		resetDefaultProfile('java')
+
+		then:
+		noExceptionThrown()
+	}
 }
