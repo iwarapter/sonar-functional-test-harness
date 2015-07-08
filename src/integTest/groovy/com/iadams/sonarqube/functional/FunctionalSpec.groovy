@@ -66,6 +66,19 @@ class FunctionalSpec extends FunctionalSpecBase {
 
 		then:
 		analysisFinishedSuccessfully()
+		analysisLogDoesNotContainsErrorsOrWarnings()
+	}
+
+	def "we can detect and error in analysis"(){
+		given:
+		file("broken.java") << "dsasdagdadg"
+
+		when:
+		runSonarRunner()
+
+		then:
+		analysisLogContainsErrorsOrWarnings()
+		analysisFailed()
 	}
 
 	def "we can break an analysis"(){

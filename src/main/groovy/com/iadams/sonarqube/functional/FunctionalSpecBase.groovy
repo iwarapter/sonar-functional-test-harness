@@ -56,6 +56,10 @@ class FunctionalSpecBase extends Specification {
 	protected static SonarRunnerResult sonarRunnerResult
 	protected static File logFile
 
+	private static final String SONAR_ERROR = ".* ERROR .*"
+	private static final String SONAR_WARN = ".* WARN .*"
+	private static final String SONAR_WARN_TO_IGNORE_RE = ".*H2 database should.*|.*Starting search|.*Starting web|.*WEB DEVELOPMENT MODE IS ENABLED.*"
+
 	/**
 	 * The setup method is run before each test and will provide a working directory
 	 * with a sonar-project.properties file configured with sensible defaults.
@@ -197,6 +201,64 @@ class FunctionalSpecBase extends Specification {
 			if(s.contains(line)){ return true }
 		}
 		false
+	}
+
+	/**
+	 * Asserts if the analysis log contains warnings or errors.
+	 */
+	void analysisLogDoesNotContainsErrorsOrWarnings(){
+		LogAnalysisResult result = analyseLog(logFile)
+		assert result.badlines.size() == 0 : ("Found following errors and/or warnings lines in the logfile:\n"
+				+ result.badlines.join("\n")
+				+ "For details see $logFile")
+	}
+
+	/**
+	 * Asserts that the analysis log contains NO warnings OR errors.
+	 */
+	void analysisLogContainsErrorsOrWarnings() {
+		LogAnalysisResult result = analyseLog(logFile)
+		assert result.badlines.size() != 0: ("Found zero instances of a warning or error.")
+	}
+
+	/**
+	 * Helper method to check all the lines of a given log file and update
+	 * @return
+	 */
+	LogAnalysisResult analyseLog(File logFile){
+		LogAnalysisResult result = new LogAnalysisResult()
+		logFile.eachLine {
+			if(isSonarError(it)){
+				result.errors++
+				result.badlines.add(it)
+			}
+
+			if(isSonarWarning(it)){
+				result.warnings++
+				result.badlines.add(it)
+			}
+		}
+		result
+	}
+
+	/**
+	 * Matches if the given lines contains the defined error regex
+	 *
+	 * @param line
+	 * @return
+	 */
+	boolean isSonarError(String line){
+		return line.matches(SONAR_ERROR)
+	}
+
+	/**
+	 * Matches if the given lines contains the defined warning regex and excludes certain warnings.
+	 *
+	 * @param line
+	 * @return
+	 */
+	boolean isSonarWarning(String line){
+		return line.matches(SONAR_WARN) && !line.matches(SONAR_WARN_TO_IGNORE_RE)
 	}
 
 	/**

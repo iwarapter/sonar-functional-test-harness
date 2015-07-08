@@ -6,7 +6,7 @@ apply from: "$rootDir/gradle/license.gradle"
 apply from: "$rootDir/gradle/sonar.gradle"
 apply from: "$rootDir/gradle/publishing.gradle"
 
-version = '1.0'
+version = '0.1'
 group = 'com.iadams.sonarqube'
 
 sourceCompatibility = 1.7
