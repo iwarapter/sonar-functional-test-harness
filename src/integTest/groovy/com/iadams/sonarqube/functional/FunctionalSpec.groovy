@@ -57,4 +57,40 @@ class FunctionalSpec extends FunctionalSpecBase {
 		then:
 		analysisFinishedSuccessfully()
 	}
+
+	def "we can break an analysis"(){
+		when: 'i add garbage to the sonar project properties file and run an analysis'
+		sonarProjectFile << 'sonar.language=KDHFkjadfkjsdf'
+		runSonarRunner()
+
+		then:
+		analysisFailed()
+		analysisLogContains("ERROR: Caused by: You must install a plugin that supports the language 'KDHFkjadfkjsdf'")
+	}
+
+	def "we can query projects metrics as part of a test"(){
+		given:
+		runSonarRunner()
+
+		expect:
+		theFollowingProjectMetricsHaveTheFollowingValue([violations:0, sqale_index:0])
+	}
+
+	def "we can query a files metrics during a test"(){
+		given:
+		File helloWorld = new File(projectDir, 'HelloWorld.java')
+		helloWorld << """public class HelloWorld {
+
+    public static void main(String[] args) {
+        System.out.println("Hello, World");
+    }
+
+}"""
+
+		when:
+		runSonarRunner()
+
+		then:
+		theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc:5, lines:7])
+	}
 }

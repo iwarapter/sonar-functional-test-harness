@@ -124,4 +124,23 @@ class FunctionalSpecBase extends Specification {
 		}
 		false
 	}
+
+	/**
+	 * Checks if the given metric/value keypair exists on the SonarQube server for a project.
+	 *
+	 * @param metrics_to_query
+	 */
+	void theFollowingProjectMetricsHaveTheFollowingValue(Map<String, Float> metrics_to_query){
+		SonarWebServiceAPI.containsMetrics(SONAR_URL, moduleName, metrics_to_query.sort())
+	}
+
+	/**
+	 * Checks if the given metric/value keypair exists on the SonarQube server for a file.
+	 *
+	 * @param file
+	 * @param metrics_to_query
+	 */
+	void theFollowingFileMetricsHaveTheFollowingValue(String file ,Map<String, Float> metrics_to_query){
+		SonarWebServiceAPI.containsMetrics(SONAR_URL, "$moduleName:$file", metrics_to_query.sort())
+	}
 }

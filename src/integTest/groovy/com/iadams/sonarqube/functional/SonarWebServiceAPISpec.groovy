@@ -33,22 +33,22 @@ class SonarWebServiceAPISpec extends Specification {
 
 	def "DeactivateAllRules"() {
 		expect:
-		SonarWebServiceAPI.deactivateAllRules('java','Sonar way')
+		SonarWebServiceAPI.deactivateAllRules('http://localhost:9000','java','Sonar way')
 	}
 
 	def "ActivateRepositoryRules"() {
 		expect:
-		SonarWebServiceAPI.activateRepositoryRules('java','Sonar way', 'common-java')
+		SonarWebServiceAPI.activateRepositoryRules('http://localhost:9000','java','Sonar way', 'common-java')
 	}
 
 	def "ResetDefaultProfile"() {
 		expect:
-		SonarWebServiceAPI.resetDefaultProfile('java')
+		SonarWebServiceAPI.resetDefaultProfile('http://localhost:9000','java')
 	}
 
 	def "cannot find profile key"(){
 		when:
-		SonarWebServiceAPI.profileKey('monkey', 'wrench')
+		SonarWebServiceAPI.profileKey('http://localhost:9000','monkey', 'wrench')
 
 		then:
 		thrown( FunctionalSpecException )

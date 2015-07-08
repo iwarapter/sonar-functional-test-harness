@@ -35,16 +35,15 @@ import groovyx.net.http.Method
 @Slf4j
 final class SonarWebServiceAPI {
 
-	private static String url = 'http://localhost:9000'
-
 	/**
 	 * Queries and asserts the contents of given metrics.
 	 *
+	 * @param url
 	 * @param project
 	 * @param metrics_to_query
 	 * @throws FunctionalSpecException
 	 */
-	static void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
+	static void containsMetrics(String url, String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
 
 		log.info("Querying the following metrics: $metrics_to_query")
 
@@ -67,17 +66,18 @@ final class SonarWebServiceAPI {
 	/**
 	 * Activates all the rules for a specified repository in a given language profile.
 	 *
+	 * @param url
 	 * @param language
 	 * @param profile
 	 * @param repository
 	 * @throws FunctionalSpecException
 	 */
-	static void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException{
+	static void activateRepositoryRules(String url, String language, String profile, String repository) throws FunctionalSpecException{
 
 		log.info("Activate all rules in $language:$profile repository: $repository")
 
 		try {
-			String key = profileKey(language, profile)
+			String key = profileKey(url, language, profile)
 			def http = new HTTPBuilder(url)
 			http.request(Method.POST){ req->
 				uri.path = '/api/qualityprofiles/activate_rules'
@@ -95,14 +95,15 @@ final class SonarWebServiceAPI {
 	/**
 	 * Deactivates all the rules in a given language profile.
 	 *
+	 * @param url
 	 * @param language
 	 * @param profile
 	 */
-	static void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
+	static void deactivateAllRules(String url, String language, String profile) throws FunctionalSpecException {
 		log.info("Deactivate all rules in profile: $language:$profile")
 
 		try {
-			String key = profileKey(language, profile)
+			String key = profileKey(url, language, profile)
 			def http = new HTTPBuilder(url)
 			http.request(Method.POST){ req->
 				uri.path = '/api/qualityprofiles/deactivate_rules'
@@ -120,10 +121,11 @@ final class SonarWebServiceAPI {
 	/**
 	 * Restores the default profiles for the given language.
 	 *
+	 * @param url
 	 * @param language
 	 * @throws FunctionalSpecException
 	 */
-	static void resetDefaultProfile(String language) throws FunctionalSpecException {
+	static void resetDefaultProfile(String url, String language) throws FunctionalSpecException {
 		log.info("Resetting default profiles for: $language")
 		try {
 			def http = new HTTPBuilder(url)
@@ -143,12 +145,13 @@ final class SonarWebServiceAPI {
 	/**
 	 * Returns the key for the given language / profile.
 	 *
+	 * @param url
 	 * @param language
 	 * @param profile
 	 * @return The profile key.
 	 * @throws FunctionalSpecException
 	 */
-	static String profileKey(String language, String profile) throws FunctionalSpecException {
+	static String profileKey(String url, String language, String profile) throws FunctionalSpecException {
 		log.info("Finding profile key for $language:$profile")
 
 		def http = new HTTPBuilder(url)
