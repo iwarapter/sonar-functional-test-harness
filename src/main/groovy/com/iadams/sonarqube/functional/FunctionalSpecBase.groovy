@@ -26,6 +26,7 @@ package com.iadams.sonarqube.functional
 
 import com.energizedwork.spock.extensions.TempDirectory
 import groovy.util.logging.Slf4j
+import org.apache.commons.io.FileUtils
 import spock.lang.Specification
 
 /**
@@ -92,33 +93,106 @@ class FunctionalSpecBase extends Specification {
 		projectDir.getName().replaceAll(/_\d+/, '')
 	}
 
-	//*********************//
-	// Test Helper Methods //
-	//*********************//
+	//
+	// Test Setup Methods
+	//
 
-	def runSonarRunner(){
+	/**
+	 * Created a directory in the test and returns the file handle.
+	 *
+	 * @param path
+	 * @param baseDir
+	 * @return the new directory
+	 */
+	protected File directory(String path, File baseDir = projectDir) {
+		new File(baseDir, path).with {
+			mkdirs()
+			it
+		}
+	}
+
+	/**
+	 * Creates a file in the test and returns the file handle.
+	 *
+	 * @param path
+	 * @param baseDir
+	 * @return the new file
+	 */
+	protected File file(String path, File baseDir = projectDir) {
+		def splitted = path.split('/')
+		def directory = splitted.size() > 1 ? directory(splitted[0..-2].join('/'), baseDir) : baseDir
+		def file = new File(directory, splitted[-1])
+		file.createNewFile()
+		file
+	}
+
+	/**
+	 * Copy a given set of files/directories
+	 *
+	 * @param srcDir
+	 * @param destination
+	 */
+	protected void copyResources(String srcDir, String destination) {
+		ClassLoader classLoader = getClass().getClassLoader();
+		URL resource = classLoader.getResource(srcDir);
+		if (resource == null) {
+			throw new RuntimeException("Could not find classpath resource: $srcDir")
+		}
+
+		File destinationFile = file(destination)
+		File resourceFile = new File(resource.toURI())
+		if (resourceFile.file) {
+			FileUtils.copyFile(resourceFile, destinationFile)
+		} else {
+			FileUtils.copyDirectory(resourceFile, destinationFile)
+		}
+	}
+
+	//
+	// Test Helper Methods
+	//
+
+	/**
+	 * Runs sonar-runner with no arguments and updates the test {@link SonarRunnerResult}
+	 */
+	void runSonarRunner(){
 		sonarRunnerResult = SonarRunnerHelper.runSonarRunner('', projectDir)
 		logFile = new File(projectDir, "$moduleName-analysis.log")
 		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
 	}
 
-	def runSonarRunnerWithArguments(String args){
+	/**
+	 * Runs sonar-runner with no arguments and updates the test {@link SonarRunnerResult}
+	 */
+	void runSonarRunnerWithArguments(String args){
 		sonarRunnerResult = SonarRunnerHelper.runSonarRunner(args, projectDir)
 		logFile = new File(projectDir, "$moduleName-analysis.log")
 		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
 	}
 
-	def analysisFinishedSuccessfully(){
+	/**
+	 * Checks the {@link SonarRunnerResult} to ensure sonar-runner exited successfully.
+	 */
+	void analysisFinishedSuccessfully(){
 		assert sonarRunnerResult != null : "Result is null, have you run sonar runner first?"
 		sonarRunnerResult.exitValue == 0
 	}
 
-	def analysisFailed(){
+	/**
+	 * Checks the {@link SonarRunnerResult} to ensure sonar-runner exited successfully.
+	 */
+	void analysisFailed(){
 		assert sonarRunnerResult != null : "Result is null, have you run sonar runner first?"
 		sonarRunnerResult.exitValue != 0
 	}
 
-	def analysisLogContains(String line){
+	/**
+	 * Checks the logFile to see if it contains the given line.
+	 *
+	 * @param line
+	 * @return True/False
+	 */
+	boolean analysisLogContains(String line){
 		for(String s : logFile.readLines()){
 			if(s.contains(line)){ return true }
 		}
@@ -144,14 +218,32 @@ class FunctionalSpecBase extends Specification {
 		SonarWebServiceAPI.containsMetrics(SONAR_URL, "$moduleName:$file", metrics_to_query.sort())
 	}
 
+	/**
+	 * Deactivates all the rules for the given language and profile.
+	 *
+	 * @param language
+	 * @param profile
+	 */
 	void deactivateAllRules(String language, String profile){
 		SonarWebServiceAPI.deactivateAllRules(SONAR_URL, language, profile)
 	}
-	
+
+	/**
+	 * Restores the language default profiles.
+	 *
+	 * @param language
+	 */
 	void resetDefaultProfile(String language){
 		SonarWebServiceAPI.resetDefaultProfile(SONAR_URL, language)
 	}
 
+	/**
+	 * Activates all the rules for a given repository for the specified language/profile.
+	 *
+	 * @param language
+	 * @param profile
+	 * @param repository
+	 */
 	void activateRepositoryRules(String language, String profile, String repository){
 		SonarWebServiceAPI.activateRepositoryRules(SONAR_URL, language, profile, repository)
 	}

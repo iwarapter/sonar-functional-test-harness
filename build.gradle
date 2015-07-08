@@ -17,6 +17,7 @@ repositories {
 }
 
 dependencies {
+    compile 'commons-io:commons-io:2.4'
     compile 'org.slf4j:slf4j-simple:1.7.12'
     compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     compile "org.spockframework:spock-core:1.0-groovy-2.3"

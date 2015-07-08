@@ -35,6 +35,16 @@ class FunctionalSpec extends FunctionalSpecBase {
 		sonarProjectFile.text.contains('all-directories-files-are-created')
 	}
 
+	def "we can copy resources"(){
+		when:
+		copyResources('HelloWorld.java', 'HelloWorld.java')
+		directory('new-folder')
+
+		then:
+		new File(projectDir, 'HelloWorld.java').isFile()
+		new File(projectDir, 'new-folder').isDirectory()
+	}
+
 	def "we can run sonar-runner as part of a test"(){
 		when:
 		runSonarRunner()
@@ -78,14 +88,7 @@ class FunctionalSpec extends FunctionalSpecBase {
 
 	def "we can query a files metrics during a test"(){
 		given:
-		File helloWorld = new File(projectDir, 'HelloWorld.java')
-		helloWorld << """public class HelloWorld {
-
-    public static void main(String[] args) {
-        System.out.println("Hello, World");
-    }
-
-}"""
+		file('HelloWorld.java') << getClass().getResource("/HelloWorld.java")
 
 		when:
 		runSonarRunner()

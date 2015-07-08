@@ -1,4 +1,4 @@
-/*
+/**
  * Sonar Functional Test Harness
  * The MIT License (MIT)
  *
@@ -22,27 +22,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.iadams.sonarqube.functional
+public class HelloWorld {
 
-import groovy.util.logging.Slf4j
-
-/**
- * Object to store the results (exit code / output/error streams) from a sonar-runner analysis.
- *
- * @author iwarapter
- */
-@Slf4j
-final class SonarRunnerResult {
-
-	int exitValue = 0
-	String output = ""
-	String error = ""
-
-	SonarRunnerResult(int exitValue, String error, String output){
-		this.exitValue = exitValue
-		this.error = error
-		this.output = output
-		log.info output
-		log.info error
+	public static void main(String[] args) {
+		System.out.println("Hello, World");
 	}
+
 }
