@@ -24,18 +24,17 @@
  */
 package com.iadams.sonarqube.functional
 
+import groovy.util.logging.Slf4j
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.HttpResponseException
 import groovyx.net.http.Method
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * @author iwarapter
  */
+@Slf4j
 final class SonarWebServiceAPI {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SonarWebServiceAPI.class)
 	private static String url = 'http://localhost:9000'
 
 	/**
@@ -47,7 +46,7 @@ final class SonarWebServiceAPI {
 	 */
 	static void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
 
-		LOG.info("Querying the following metrics: $metrics_to_query")
+		log.info("Querying the following metrics: $metrics_to_query")
 
 		try {
 			def http = new HTTPBuilder(url)
@@ -75,7 +74,7 @@ final class SonarWebServiceAPI {
 	 */
 	static void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException{
 
-		LOG.info("Activate all rules in $language:$profile repository: $repository")
+		log.info("Activate all rules in $language:$profile repository: $repository")
 
 		try {
 			String key = profileKey(language, profile)
@@ -86,7 +85,7 @@ final class SonarWebServiceAPI {
 				headers.'Authorization' =
 						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
 			}
-			LOG.info("All rules in $language:$profile repository: $repository activated.")
+			log.info("All rules in $language:$profile repository: $repository activated.")
 		}
 		catch( HttpResponseException e){
 			throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
@@ -100,7 +99,7 @@ final class SonarWebServiceAPI {
 	 * @param profile
 	 */
 	static void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
-		LOG.info("Deactivate all rules in profile: $language:$profile")
+		log.info("Deactivate all rules in profile: $language:$profile")
 
 		try {
 			String key = profileKey(language, profile)
@@ -111,7 +110,7 @@ final class SonarWebServiceAPI {
 				headers.'Authorization' =
 						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
 			}
-			LOG.info("All rules in $language:$profile deactivated.")
+			log.info("All rules in $language:$profile deactivated.")
 		}
 		catch( HttpResponseException e){
 			throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
@@ -125,7 +124,7 @@ final class SonarWebServiceAPI {
 	 * @throws FunctionalSpecException
 	 */
 	static void resetDefaultProfile(String language) throws FunctionalSpecException {
-		LOG.info("Resetting default profiles for: $language")
+		log.info("Resetting default profiles for: $language")
 		try {
 			def http = new HTTPBuilder(url)
 			http.request(Method.POST){ req->
@@ -134,7 +133,7 @@ final class SonarWebServiceAPI {
 				headers.'Authorization' =
 						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
 			}
-			LOG.info("Reset default profiles for: $language")
+			log.info("Reset default profiles for: $language")
 		}
 		catch( HttpResponseException e){
 			throw new FunctionalSpecException("Cannot restore built in profile, details: ${e.message}", e)
@@ -150,7 +149,7 @@ final class SonarWebServiceAPI {
 	 * @throws FunctionalSpecException
 	 */
 	static String profileKey(String language, String profile) throws FunctionalSpecException {
-		LOG.info("Finding profile key for $language:$profile")
+		log.info("Finding profile key for $language:$profile")
 
 		def http = new HTTPBuilder(url)
 		def resp = http.get(path: '/api/rules/app')

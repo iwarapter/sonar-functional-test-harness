@@ -25,8 +25,7 @@
 package com.iadams.sonarqube.functional
 
 import com.energizedwork.spock.extensions.TempDirectory
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import spock.lang.Specification
 
 /**
@@ -37,9 +36,8 @@ import spock.lang.Specification
  *
  * @author iwarapter
  */
+@Slf4j
 class FunctionalSpecBase extends Specification {
-
-	private static final Logger LOG = LoggerFactory.getLogger(FunctionalSpecBase.class);
 
 	@TempDirectory(clean = false)
 	protected File projectDir
@@ -54,6 +52,9 @@ class FunctionalSpecBase extends Specification {
 	protected static String PLUGIN_DIR = 'extensions/plugins/'
 	protected static String PLUGIN_NAME_REGEX
 
+	protected static SonarRunnerResult sonarRunnerResult
+	protected static File logFile
+
 	/**
 	 * The setup method is run before each test and will provide a working directory
 	 * with a sonar-project.properties file configured with sensible defaults.
@@ -62,6 +63,8 @@ class FunctionalSpecBase extends Specification {
 	 */
 	def setup() {
 		moduleName = findModuleName()
+		sonarRunnerResult = null
+		logFile = null
 
 		if (!sonarProjectFile) {
 			sonarProjectFile = new File(projectDir, 'sonar-project.properties')
@@ -72,12 +75,12 @@ class FunctionalSpecBase extends Specification {
 		sonarProjectFile << "sonar.sources=.\n"
 		sonarProjectFile << "sonar.scm.disabled=true\n"
 
-		LOG.info "Running test from ${projectDir.getAbsolutePath()}"
+		log.info "Running test from ${projectDir.getAbsolutePath()}"
 	}
 
 	def setupSpec() {
 		String sonarHome = System.getenv('SONAR_HOME')
-		LOG.info "SONAR_HOME: $sonarHome"
+		log.info "SONAR_HOME: $sonarHome"
 	}
 
 	def cleanupSpec() {
@@ -92,4 +95,33 @@ class FunctionalSpecBase extends Specification {
 	//*********************//
 	// Test Helper Methods //
 	//*********************//
+
+	def runSonarRunner(){
+		sonarRunnerResult = SonarRunnerHelper.runSonarRunner('', projectDir)
+		logFile = new File(projectDir, "$moduleName-analysis.log")
+		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
+	}
+
+	def runSonarRunnerWithArguments(String args){
+		sonarRunnerResult = SonarRunnerHelper.runSonarRunner(args, projectDir)
+		logFile = new File(projectDir, "$moduleName-analysis.log")
+		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
+	}
+
+	def analysisFinishedSuccessfully(){
+		assert sonarRunnerResult != null : "Result is null, have you run sonar runner first?"
+		sonarRunnerResult.exitValue == 0
+	}
+
+	def analysisFailed(){
+		assert sonarRunnerResult != null : "Result is null, have you run sonar runner first?"
+		sonarRunnerResult.exitValue != 0
+	}
+
+	def analysisLogContains(String line){
+		for(String s : logFile.readLines()){
+			if(s.contains(line)){ return true }
+		}
+		false
+	}
 }
