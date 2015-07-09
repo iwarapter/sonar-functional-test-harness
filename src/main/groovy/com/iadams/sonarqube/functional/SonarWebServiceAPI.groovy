@@ -40,9 +40,9 @@ final class SonarWebServiceAPI {
 	 *
 	 * @param url
 	 * @return
-	 * @throws IOException
+	 * @throws ConnectException
 	 */
-	static int getResponseCode(String url) throws IOException {
+	static int getResponseCode(String url) throws ConnectException {
 
 		int code
 		new HTTPBuilder(url).get( path:'') { response ->

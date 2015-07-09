@@ -29,6 +29,10 @@ package com.iadams.sonarqube.functional
  */
 class FunctionalSpec extends FunctionalSpecBase {
 
+	def setupSpec(){
+		PLUGIN_NAME_REGEX = ''
+	}
+
 	def "all directories/files are created"(){
 		expect:
 		projectDir.isDirectory()
@@ -57,7 +61,7 @@ class FunctionalSpec extends FunctionalSpecBase {
 
 		then:
 		analysisFinishedSuccessfully()
-		analysisLogContains('DEBUG - ')
+		analysisLogContains('.*DEBUG - .*')
 	}
 
 	def "we can run sonar-runner"(){

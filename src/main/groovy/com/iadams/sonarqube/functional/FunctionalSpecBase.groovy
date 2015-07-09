@@ -40,8 +40,7 @@ import spock.lang.Specification
 @Slf4j
 class FunctionalSpecBase extends Specification {
 
-	@TempDirectory(clean = false)
-	protected File projectDir
+	@TempDirectory(clean=false) protected File projectDir
 
 	protected String moduleName
 	protected File sonarProjectFile
@@ -51,7 +50,7 @@ class FunctionalSpecBase extends Specification {
 	protected static String SONAR_URL = "http://localhost:9000"
 	protected static String JAR_DIR = 'build/libs/'
 	protected static String PLUGIN_DIR = 'extensions/plugins/'
-	protected static String PLUGIN_NAME_REGEX
+	protected static String PLUGIN_NAME_REGEX = ''
 	protected static String SONAR_HOME = ''
 
 	protected static SonarRunnerResult sonarRunnerResult
@@ -90,17 +89,18 @@ class FunctionalSpecBase extends Specification {
 			log.info "SonarQube is already running."
 		}
 		else {
+			log.info "SonarQube is not running."
 			SONAR_HOME = System.getenv('SONAR_HOME')
 			log.info "SONAR_HOME: $SONAR_HOME"
 			if (SONAR_HOME) {
 				if (isInstalled()) {
 					cleanServerLog()
 					installPlugin()
-					//startSonar()// : "Cannot start SonarQube from $sonarHome exiting."
+					assert startSonar() : "Cannot start SonarQube from $SONAR_HOME exiting."
 					didSonarStart = true
-					//checkServerLogs(sonarHome)
+					checkServerLogs()
 				} else {
-					throw new FunctionalSpecException("The folder " + sonarHome + " does not exist.")
+					throw new FunctionalSpecException("The folder $SONAR_HOME does not exist.")
 				}
 			} else {
 				throw new FunctionalSpecException("The environment variable SONAR_HOME is null and the webui is not available.")
@@ -110,6 +110,7 @@ class FunctionalSpecBase extends Specification {
 
 	def cleanupSpec() {
 		if (didSonarStart) {
+			stopSonar()
 		}
 	}
 
@@ -117,7 +118,11 @@ class FunctionalSpecBase extends Specification {
 		projectDir.getName().replaceAll(/_\d+/, '')
 	}
 
+	
+	//
 	// SERVER SETUP START
+	//
+
 
 	/**
 	 * Checks if the sonarHome exists.
@@ -130,13 +135,20 @@ class FunctionalSpecBase extends Specification {
 	}
 
 	/**
+	 * Return file handle to the sonar server log.
+	 * @return
+	 */
+	File sonarLog(){
+		new File(SONAR_HOME, 'logs/sonar.log')
+	}
+
+	/**
 	 * Deletes the server log for the given path.
 	 *
 	 * @param sonarhome
 	 */
 	void cleanServerLog(){
-		File log = new File(SONAR_HOME, 'logs/sonar.log')
-		log.delete()
+		sonarLog().delete()
 	}
 
 	/**
@@ -145,7 +157,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param sonarhome
 	 */
 	void installPlugin(){
-		File jarDir = new File(SONAR_HOME , JAR_DIR)
+		File jarDir = new File( JAR_DIR)
 		File[] jarFiles = findFiles(jarDir, PLUGIN_NAME_REGEX)
 
 		if(jarFiles != null || jarFiles.size()){
@@ -221,7 +233,83 @@ class FunctionalSpecBase extends Specification {
 		return "bin/linux-x86-32/sonar.sh";
 	}
 
+	/**
+	 * Executes the {@link #startScript} method to run sonar and asserts the command exits 0.
+	 * It then waits for the sonar webui to respond by calling {@link #waitForSonar}.
+	 *
+	 * @param sonarHome
+	 */
+	boolean startSonar(){
+		log.info "Starting SonarQube\n ${startScript()}"
+		def cmd = startScript().execute()
+		cmd.waitFor()
+		cmd.exitValue() == 0
+		waitForSonar(60)
+	}
+
+
+	/**
+	 * Executes the {@link #stopScript} method to run sonar and asserts the command exits 0.
+	 * It then waits for the sonar webui to stop responding by calling {@link #waitForSonarDown}.
+	 *
+	 * @param sonarHome
+	 */
+	boolean stopSonar(){
+		log.info "Stopping SonarQube\n ${startScript()}"
+		def cmd = stopScript().execute()
+		cmd.waitFor()
+		cmd.exitValue() == 0
+		waitForSonarDown(300)
+	}
+
+	/**
+	 * Polls the sonar webui to see if it is responding or it times out.
+	 *
+	 * @param timeout
+	 * @return
+	 */
+	boolean waitForSonar(int timeout){
+		for (i in 0..timeout){
+			if(isWebuiUp()){
+				return true
+			}
+			sleep(1000)
+		}
+		return false
+	}
+
+	/**
+	 * Polls the sonar webui to see if it has stopped responding or it times out.
+	 *
+	 * @param timeout
+	 * @return
+	 */
+	boolean waitForSonarDown(int timeout){
+		for (i in timeout){
+			if(isWebuiDown()){
+				return true
+			}
+			sleep(1000)
+		}
+		return false
+	}
+
+	/**
+	 * Asserts the {@link #sonarLog} has no warning or errors.
+	 * @return
+	 */
+	boolean checkServerLogs(){
+		LogAnalysisResult result = analyseLog(sonarLog())
+		assert result.badlines.size() == 0 : ("Found following errors and/or warnings lines in the logfile:\n"
+				+ result.badlines.join("\n")
+				+ "For details see ${sonarLog()}")
+	}
+
+	//
 	// SERVER SETUP FINISH
+	//
+
+
 
 	//
 	// Test Setup Methods
@@ -324,7 +412,7 @@ class FunctionalSpecBase extends Specification {
 	 */
 	boolean analysisLogContains(String line){
 		for(String s : analysisLogFile.readLines()){
-			if(s.contains(line)){ return true }
+			if(s.matches(line)){ return true }
 		}
 		false
 	}
@@ -442,7 +530,9 @@ class FunctionalSpecBase extends Specification {
 	 * @return
 	 */
 	boolean isWebuiUp(){
-		SonarWebServiceAPI.getResponseCode(SONAR_URL) == 200
+		try {
+			SonarWebServiceAPI.getResponseCode(SONAR_URL) == 200
+		} catch (ConnectException e){ false }
 	}
 
 	/**
@@ -451,6 +541,9 @@ class FunctionalSpecBase extends Specification {
 	 * @return
 	 */
 	boolean isWebuiDown(){
-		SonarWebServiceAPI.getResponseCode(SONAR_URL) != 200
+		try {
+			return SonarWebServiceAPI.getResponseCode(SONAR_URL) != 200
+		}
+		catch (ConnectException e){ true }
 	}
 }
