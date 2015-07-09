@@ -16,11 +16,7 @@ task integTest(type: Test) {
 task jacocoIntegTestReport(type: JacocoReport) {
 	sourceSets sourceSets.main
 	executionData integTest
-	reports {
-		xml.enabled true
-		csv.enabled false
-		html.destination "${buildDir}/reports/jacocoIntegTestReport"
-	}
+	reports.html.destination "${buildDir}/reports/jacocoIntegTestReport"
 }
 
 integTest.finalizedBy jacocoIntegTestReport

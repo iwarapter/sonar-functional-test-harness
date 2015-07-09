@@ -52,9 +52,10 @@ class FunctionalSpecBase extends Specification {
 	protected static String JAR_DIR = 'build/libs/'
 	protected static String PLUGIN_DIR = 'extensions/plugins/'
 	protected static String PLUGIN_NAME_REGEX
+	protected static String SONAR_HOME = ''
 
 	protected static SonarRunnerResult sonarRunnerResult
-	protected static File logFile
+	protected static File analysisLogFile
 
 	private static final String SONAR_ERROR = ".* ERROR .*"
 	private static final String SONAR_WARN = ".* WARN .*"
@@ -69,7 +70,7 @@ class FunctionalSpecBase extends Specification {
 	def setup() {
 		moduleName = findModuleName()
 		sonarRunnerResult = null
-		logFile = null
+		analysisLogFile = null
 
 		if (!sonarProjectFile) {
 			sonarProjectFile = new File(projectDir, 'sonar-project.properties')
@@ -84,8 +85,27 @@ class FunctionalSpecBase extends Specification {
 	}
 
 	def setupSpec() {
-		String sonarHome = System.getenv('SONAR_HOME')
-		log.info "SONAR_HOME: $sonarHome"
+
+		if(isWebuiUp()){
+			log.info "SonarQube is already running."
+		}
+		else {
+			SONAR_HOME = System.getenv('SONAR_HOME')
+			log.info "SONAR_HOME: $SONAR_HOME"
+			if (SONAR_HOME) {
+				if (isInstalled()) {
+					cleanServerLog()
+					installPlugin()
+					//startSonar()// : "Cannot start SonarQube from $sonarHome exiting."
+					didSonarStart = true
+					//checkServerLogs(sonarHome)
+				} else {
+					throw new FunctionalSpecException("The folder " + sonarHome + " does not exist.")
+				}
+			} else {
+				throw new FunctionalSpecException("The environment variable SONAR_HOME is null and the webui is not available.")
+			}
+		}
 	}
 
 	def cleanupSpec() {
@@ -96,6 +116,112 @@ class FunctionalSpecBase extends Specification {
 	private String findModuleName() {
 		projectDir.getName().replaceAll(/_\d+/, '')
 	}
+
+	// SERVER SETUP START
+
+	/**
+	 * Checks if the sonarHome exists.
+	 *
+	 * @return
+	 */
+	boolean isInstalled(){
+		log.debug("Check directory exists: $SONAR_HOME")
+		return new File(SONAR_HOME).exists()
+	}
+
+	/**
+	 * Deletes the server log for the given path.
+	 *
+	 * @param sonarhome
+	 */
+	void cleanServerLog(){
+		File log = new File(SONAR_HOME, 'logs/sonar.log')
+		log.delete()
+	}
+
+	/**
+	 * Copies a plugin from the {@link #JAR_DIR} to the {@link #PLUGIN_DIR}
+	 *
+	 * @param sonarhome
+	 */
+	void installPlugin(){
+		File jarDir = new File(SONAR_HOME , JAR_DIR)
+		File[] jarFiles = findFiles(jarDir, PLUGIN_NAME_REGEX)
+
+		if(jarFiles != null || jarFiles.size()){
+
+			log.info("Installing plugin")
+			File pluginDir = new File(SONAR_HOME, PLUGIN_DIR)
+
+			for(File f : findFiles(pluginDir, PLUGIN_NAME_REGEX)){
+				log.info("Removing: " + f.getAbsoluteFile())
+				f.delete()
+			}
+
+			for(File f : jarFiles) {
+				log.info("Copying ${f.name} to $pluginDir")
+				FileUtils.copyFileToDirectory(f, pluginDir)
+			}
+		}
+		else {
+			log.warn("No plugin detected to install")
+		}
+	}
+
+	/**
+	 * Helper method to return all files matching a given regex pattern.
+	 *
+	 * @param directory
+	 * @param regex
+	 * @return
+	 */
+	File[] findFiles(File directory, String regex){
+		directory.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.matches(regex)
+			}
+		})
+	}
+
+	/**
+	 * Returns the fully qualified command to start script.
+	 *
+	 * @return
+	 */
+	String startScript(){
+		return SONAR_HOME + "/" + scriptPath() + " start";
+	}
+
+	/**
+	 * Returns the fully qualified command to stop script.
+	 *
+	 * @return
+	 */
+	String stopScript(){
+		return SONAR_HOME + "/" + scriptPath() + " stop";
+	}
+
+	/**
+	 * Based on system property attempts to work out the correct scipt path.
+	 *
+	 * @return
+	 */
+	String scriptPath(){
+		//Just mac/linux atm
+		String os = System.getProperty("os.name");
+		String arch = System.getProperty("os.arch");
+
+		if( os.equals("Linux") && arch.equals("x86_64") ){
+			return "bin/linux-x86-64/sonar.sh";
+		}
+		else if( os.equals("Mac OS X") && arch.equals("x86_64") ){
+			return "bin/macosx-universal-64/sonar.sh";
+		}
+		return "bin/linux-x86-32/sonar.sh";
+	}
+
+	// SERVER SETUP FINISH
 
 	//
 	// Test Setup Methods
@@ -140,7 +266,7 @@ class FunctionalSpecBase extends Specification {
 		ClassLoader classLoader = getClass().getClassLoader();
 		URL resource = classLoader.getResource(srcDir);
 		if (resource == null) {
-			throw new RuntimeException("Could not find classpath resource: $srcDir")
+			throw new FunctionalSpecException("Could not find classpath resource: $srcDir")
 		}
 
 		File destinationFile = file(destination)
@@ -161,8 +287,8 @@ class FunctionalSpecBase extends Specification {
 	 */
 	void runSonarRunner(){
 		sonarRunnerResult = SonarRunnerHelper.runSonarRunner('', projectDir)
-		logFile = new File(projectDir, "$moduleName-analysis.log")
-		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
+		analysisLogFile = new File(projectDir, "$moduleName-analysis.log")
+		analysisLogFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
 	}
 
 	/**
@@ -170,8 +296,8 @@ class FunctionalSpecBase extends Specification {
 	 */
 	void runSonarRunnerWithArguments(String args){
 		sonarRunnerResult = SonarRunnerHelper.runSonarRunner(args, projectDir)
-		logFile = new File(projectDir, "$moduleName-analysis.log")
-		logFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
+		analysisLogFile = new File(projectDir, "$moduleName-analysis.log")
+		analysisLogFile.write(sonarRunnerResult.output + sonarRunnerResult.error)
 	}
 
 	/**
@@ -191,13 +317,13 @@ class FunctionalSpecBase extends Specification {
 	}
 
 	/**
-	 * Checks the logFile to see if it contains the given line.
+	 * Checks the analysisLogFile to see if it contains the given line.
 	 *
 	 * @param line
 	 * @return True/False
 	 */
 	boolean analysisLogContains(String line){
-		for(String s : logFile.readLines()){
+		for(String s : analysisLogFile.readLines()){
 			if(s.contains(line)){ return true }
 		}
 		false
@@ -206,18 +332,18 @@ class FunctionalSpecBase extends Specification {
 	/**
 	 * Asserts if the analysis log contains warnings or errors.
 	 */
-	void analysisLogDoesNotContainsErrorsOrWarnings(){
-		LogAnalysisResult result = analyseLog(logFile)
+	void analysisLogDoesNotContainErrorsOrWarnings(){
+		LogAnalysisResult result = analyseLog(analysisLogFile)
 		assert result.badlines.size() == 0 : ("Found following errors and/or warnings lines in the logfile:\n"
 				+ result.badlines.join("\n")
-				+ "For details see $logFile")
+				+ "For details see $analysisLogFile")
 	}
 
 	/**
 	 * Asserts that the analysis log contains NO warnings OR errors.
 	 */
 	void analysisLogContainsErrorsOrWarnings() {
-		LogAnalysisResult result = analyseLog(logFile)
+		LogAnalysisResult result = analyseLog(analysisLogFile)
 		assert result.badlines.size() != 0: ("Found zero instances of a warning or error.")
 	}
 
@@ -308,5 +434,23 @@ class FunctionalSpecBase extends Specification {
 	 */
 	void activateRepositoryRules(String language, String profile, String repository){
 		SonarWebServiceAPI.activateRepositoryRules(SONAR_URL, language, profile, repository)
+	}
+
+	/**
+	 * Checks if the webui for the given URL gives a response code 200
+	 *
+	 * @return
+	 */
+	boolean isWebuiUp(){
+		SonarWebServiceAPI.getResponseCode(SONAR_URL) == 200
+	}
+
+	/**
+	 * Checks if the webui for the given URL gives a response not equal to 200
+	 *
+	 * @return
+	 */
+	boolean isWebuiDown(){
+		SonarWebServiceAPI.getResponseCode(SONAR_URL) != 200
 	}
 }

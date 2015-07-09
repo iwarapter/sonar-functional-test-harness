@@ -66,7 +66,7 @@ class FunctionalSpec extends FunctionalSpecBase {
 
 		then:
 		analysisFinishedSuccessfully()
-		analysisLogDoesNotContainsErrorsOrWarnings()
+		analysisLogDoesNotContainErrorsOrWarnings()
 	}
 
 	def "we can detect and error in analysis"(){

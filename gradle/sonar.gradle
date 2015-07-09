@@ -12,6 +12,7 @@ sonarRunner {
 		property "sonar.jdbc.username", "sonar"
 		property "sonar.jdbc.password", "sonar"
 		property "sonar.tests", sourceSets.test.groovy.srcDirs + sourceSets.integTest.groovy.srcDirs
-		property "sonar.jacoco.itReportPath", "$buildDir/jacoco/integTest.exec"
+		property "sonar.groovy.jacoco.reportPath", "$buildDir/jacoco/test.exec"
+		property "sonar.groovy.jacoco.itReportPath", "$buildDir/jacoco/integTest.exec"
 	}
 }

@@ -36,6 +36,22 @@ import groovyx.net.http.Method
 final class SonarWebServiceAPI {
 
 	/**
+	 * Returns the response code for the target URL.
+	 *
+	 * @param url
+	 * @return
+	 * @throws IOException
+	 */
+	static int getResponseCode(String url) throws IOException {
+
+		int code
+		new HTTPBuilder(url).get( path:'') { response ->
+			code = response.statusLine.statusCode
+		}
+		code
+	}
+
+	/**
 	 * Queries and asserts the contents of given metrics.
 	 *
 	 * @param url
