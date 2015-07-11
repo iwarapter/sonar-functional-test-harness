@@ -105,13 +105,13 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
 	def "we can query a files metrics during a test"(){
 		given:
-		file('HelloWorld.java') << getClass().getResource("/HelloWorld.java")
+		file('HelloWorld.java') << getClass().getResource("/HelloWorld.java").text
 
 		when:
 		runSonarRunner()
 
 		then:
-		theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc:5, lines:7])
+		theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc:5, lines:31])
 	}
 
 	def "we can change profile configurations"(){

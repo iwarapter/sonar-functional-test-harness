@@ -527,6 +527,15 @@ class FunctionalSpecBase extends Specification {
 	}
 
 	/**
+	 * Deletes the specified project (default is the current test project)
+	 *
+	 * @param project
+	 */
+	void deleteProject(String project = moduleName){
+		sonarAPI.deleteProject(project)
+	}
+
+	/**
 	 * Checks if the webui for the given URL gives a response code 200
 	 *
 	 * @return

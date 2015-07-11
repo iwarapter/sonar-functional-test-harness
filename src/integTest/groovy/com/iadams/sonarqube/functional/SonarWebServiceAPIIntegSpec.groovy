@@ -55,4 +55,12 @@ class SonarWebServiceAPIIntegSpec extends Specification {
 		then:
 		thrown( FunctionalSpecException )
 	}
+
+	def "we can post to the project delete web service"(){
+		when:
+		sonarAPI.deleteProject('we-can-query-files-projects-as-part-of-a-test')
+
+		then:
+		noExceptionThrown()
+	}
 }

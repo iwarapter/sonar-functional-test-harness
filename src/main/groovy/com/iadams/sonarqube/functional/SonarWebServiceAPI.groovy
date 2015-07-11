@@ -186,4 +186,21 @@ class SonarWebServiceAPI {
 
 		throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
 	}
+
+	/**
+	 * Attempts to delete a project, returns the statusCode.
+	 *
+	 * @param project
+	 * @return
+	 */
+	void deleteProject(String project){
+		log.info "Attempting to delete project: $project"
+
+		try {
+			http.post(path: '/api/projects/destroy', query: [id: project], headers: [Authorization: "Basic ${"admin:admin".bytes.encodeBase64().toString()}"])
+			log.info "Successfully deleted project: $project"
+		} catch (HttpResponseException e){
+			log.warn "Failed to delete project: $project"
+		}
+	}
 }
