@@ -72,6 +72,7 @@ class FunctionalSpecBaseSpec extends Specification {
 		"Linux"		| "x86_64"	| 'bin/linux-x86-64/sonar.sh'
 		"Mac OS X"	| "x86"		| 'bin/linux-x86-32/sonar.sh'
 		"Linux"		| "x86"		| 'bin/linux-x86-32/sonar.sh'
+		"Linux"		| "amd64"	| 'bin/linux-x86-64/sonar.sh'
 	}
 
 	def "isWebuiUp"(){

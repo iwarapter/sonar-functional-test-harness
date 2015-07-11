@@ -227,13 +227,16 @@ class FunctionalSpecBase extends Specification {
 		String os = System.getProperty("os.name");
 		String arch = System.getProperty("os.arch");
 
-		if( os.equals("Linux") && arch.equals("x86_64") ){
-			return "bin/linux-x86-64/sonar.sh";
+		if( os == "Linux" && arch == "x86_64"){
+			return "bin/linux-x86-64/sonar.sh"
 		}
-		else if( os.equals("Mac OS X") && arch.equals("x86_64") ){
-			return "bin/macosx-universal-64/sonar.sh";
+		if( os == "Linux" && arch == "amd64"){
+			return "bin/linux-x86-64/sonar.sh"
 		}
-		return "bin/linux-x86-32/sonar.sh";
+		if( os == "Mac OS X" && arch == "x86_64"){
+			return "bin/macosx-universal-64/sonar.sh"
+		}
+		return "bin/linux-x86-32/sonar.sh"
 	}
 
 	/**
