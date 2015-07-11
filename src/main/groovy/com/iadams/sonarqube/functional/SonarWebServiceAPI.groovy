@@ -74,6 +74,7 @@ class SonarWebServiceAPI {
 		log.info("Querying the following metrics: $metrics_to_query")
 
 		try {
+			log.info "Query String: ${http.uri}/api/resources?resouce=${project}&metrics=${metrics_to_query.keySet().join(',')}"
 			def resp = http.get(path: '/api/resources', query: [resource: project, metrics: metrics_to_query.keySet().join(',')])
 
 			Map<String, Float> results = [:]

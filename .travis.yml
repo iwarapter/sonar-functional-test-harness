@@ -16,7 +16,7 @@ install:
   - cd -
 
 script:
-  - ./gradlew clean build integTest
+  - ./gradlew clean build integTest --i
 
 before_install:
  - chmod +x gradlew
