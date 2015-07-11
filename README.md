@@ -16,14 +16,14 @@ Usage
 
 Gradle:
 ```groovy
-testCompile 'com.iadams.sonarqube:sonar-functional-test-harness:0.1.0'
+testCompile 'com.iadams.sonarqube:sonar-functional-test-harness:0.1.1'
 ```
 Maven:
 ```xml
 <dependency>
     <groupId>com.iadams.sonarqube</groupId>
     <artifactId>sonar-functional-test-harness</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <scope>test</scope>
 </dependency>
 ```
