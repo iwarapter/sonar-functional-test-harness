@@ -27,7 +27,7 @@ package com.iadams.sonarqube.functional
 /**
  * @author iwarapter
  */
-class FunctionalSpec extends FunctionalSpecBase {
+class FunctionalIntegSpec extends FunctionalSpecBase {
 
 	def setupSpec(){
 		PLUGIN_NAME_REGEX = ''

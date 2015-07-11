@@ -33,7 +33,17 @@ import groovyx.net.http.Method
  * @author iwarapter
  */
 @Slf4j
-final class SonarWebServiceAPI {
+class SonarWebServiceAPI {
+
+	HTTPBuilder http
+
+	SonarWebServiceAPI(){
+		this.http = new HTTPBuilder('http://localhost:9000')
+	}
+
+	SonarWebServiceAPI(String url){
+		this.http = new HTTPBuilder(url)
+	}
 
 	/**
 	 * Returns the response code for the target URL.
@@ -42,10 +52,10 @@ final class SonarWebServiceAPI {
 	 * @return
 	 * @throws ConnectException
 	 */
-	static int getResponseCode(String url) throws ConnectException {
+	int getResponseCode() throws ConnectException {
 
 		int code
-		new HTTPBuilder(url).get( path:'') { response ->
+		http.get( path:'') { response ->
 			code = response.statusLine.statusCode
 		}
 		code
@@ -59,12 +69,11 @@ final class SonarWebServiceAPI {
 	 * @param metrics_to_query
 	 * @throws FunctionalSpecException
 	 */
-	static void containsMetrics(String url, String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
+	void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
 
 		log.info("Querying the following metrics: $metrics_to_query")
 
 		try {
-			def http = new HTTPBuilder(url)
 			def resp = http.get(path: '/api/resources', query: [resource: project, metrics: metrics_to_query.keySet().join(',')])
 
 			Map<String, Float> results = [:]
@@ -88,13 +97,12 @@ final class SonarWebServiceAPI {
 	 * @param repository
 	 * @throws FunctionalSpecException
 	 */
-	static void activateRepositoryRules(String url, String language, String profile, String repository) throws FunctionalSpecException{
+	void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException{
 
 		log.info("Activate all rules in $language:$profile repository: $repository")
 
 		try {
-			String key = profileKey(url, language, profile)
-			def http = new HTTPBuilder(url)
+			String key = profileKey(language, profile)
 			http.request(Method.POST){ req->
 				uri.path = '/api/qualityprofiles/activate_rules'
 				uri.query = [ profile_key: key , repositories: repository]
@@ -115,12 +123,11 @@ final class SonarWebServiceAPI {
 	 * @param language
 	 * @param profile
 	 */
-	static void deactivateAllRules(String url, String language, String profile) throws FunctionalSpecException {
+	void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
 		log.info("Deactivate all rules in profile: $language:$profile")
 
 		try {
-			String key = profileKey(url, language, profile)
-			def http = new HTTPBuilder(url)
+			String key = profileKey(language, profile)
 			http.request(Method.POST){ req->
 				uri.path = '/api/qualityprofiles/deactivate_rules'
 				uri.query = [ profile_key: key ]
@@ -141,10 +148,9 @@ final class SonarWebServiceAPI {
 	 * @param language
 	 * @throws FunctionalSpecException
 	 */
-	static void resetDefaultProfile(String url, String language) throws FunctionalSpecException {
+	void resetDefaultProfile(String language) throws FunctionalSpecException {
 		log.info("Resetting default profiles for: $language")
 		try {
-			def http = new HTTPBuilder(url)
 			http.request(Method.POST){ req->
 				uri.path = '/api/qualityprofiles/restore_built_in'
 				uri.query = [ language: language ]
@@ -167,10 +173,9 @@ final class SonarWebServiceAPI {
 	 * @return The profile key.
 	 * @throws FunctionalSpecException
 	 */
-	static String profileKey(String url, String language, String profile) throws FunctionalSpecException {
+	String profileKey(String language, String profile) throws FunctionalSpecException {
 		log.info("Finding profile key for $language:$profile")
 
-		def http = new HTTPBuilder(url)
 		def resp = http.get(path: '/api/rules/app')
 		for(i in resp.qualityprofiles){
 			if(i.lang == language && i.name == profile){

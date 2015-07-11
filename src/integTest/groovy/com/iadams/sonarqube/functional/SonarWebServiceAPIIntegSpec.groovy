@@ -29,26 +29,28 @@ import spock.lang.Specification
 /**
  * @author iwarapter
  */
-class SonarWebServiceAPISpec extends Specification {
+class SonarWebServiceAPIIntegSpec extends Specification {
+
+	SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
 
 	def "DeactivateAllRules"() {
 		expect:
-		SonarWebServiceAPI.deactivateAllRules('http://localhost:9000','java','Sonar way')
+		sonarAPI.deactivateAllRules('java','Sonar way')
 	}
 
 	def "ActivateRepositoryRules"() {
 		expect:
-		SonarWebServiceAPI.activateRepositoryRules('http://localhost:9000','java','Sonar way', 'common-java')
+		sonarAPI.activateRepositoryRules('java','Sonar way', 'common-java')
 	}
 
 	def "ResetDefaultProfile"() {
 		expect:
-		SonarWebServiceAPI.resetDefaultProfile('http://localhost:9000','java')
+		sonarAPI.resetDefaultProfile('java')
 	}
 
 	def "cannot find profile key"(){
 		when:
-		SonarWebServiceAPI.profileKey('http://localhost:9000','monkey', 'wrench')
+		sonarAPI.profileKey('monkey', 'wrench')
 
 		then:
 		thrown( FunctionalSpecException )

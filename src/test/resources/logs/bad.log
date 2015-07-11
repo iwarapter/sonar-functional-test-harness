@@ -1,0 +1,14 @@
+22:09:43.022 INFO  - Sensor Lines Sensor
+22:09:43.032 INFO  - Sensor Lines Sensor (done) | time=10ms
+22:09:43.032 INFO  - Sensor QProfileSensor
+22:09:43.036 INFO  - Sensor QProfileSensor (done) | time=4ms
+22:09:43.036 INFO  - Sensor InitialOpenIssuesSensor
+22:09:43.086 INFO  - Sensor InitialOpenIssuesSensor (done) | time=50ms
+22:09:43.087 INFO  - Sensor ProjectLinksSensor
+22:09:43.093 INFO  - Sensor ProjectLinksSensor (done) | time=6ms
+22:09:43.093 INFO  - Sensor VersionEventsSensor
+22:09:43.111 INFO  - Sensor VersionEventsSensor (done) | time=18ms
+22:09:43.112 INFO  - Sensor ScmStatsSensor
+22:09:43.112 INFO  - Collection SCM Change log for the last 0 days
+22:09:43.195 INFO  - Sensor ScmStatsSensor (done) | time=83ms
+22:09:43.230 ERROR - Parse error at line 1 column 4:

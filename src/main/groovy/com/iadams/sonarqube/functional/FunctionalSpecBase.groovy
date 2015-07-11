@@ -44,6 +44,7 @@ class FunctionalSpecBase extends Specification {
 
 	protected String moduleName
 	protected File sonarProjectFile
+	protected static SonarWebServiceAPI sonarAPI
 
 	protected static boolean didSonarStart
 
@@ -84,6 +85,8 @@ class FunctionalSpecBase extends Specification {
 	}
 
 	def setupSpec() {
+
+		sonarAPI = new SonarWebServiceAPI(SONAR_URL)
 
 		if(isWebuiUp()){
 			log.info "SonarQube is already running."
@@ -296,9 +299,8 @@ class FunctionalSpecBase extends Specification {
 
 	/**
 	 * Asserts the {@link #sonarLog} has no warning or errors.
-	 * @return
 	 */
-	boolean checkServerLogs(){
+	void checkServerLogs(){
 		LogAnalysisResult result = analyseLog(sonarLog())
 		assert result.badlines.size() == 0 : ("Found following errors and/or warnings lines in the logfile:\n"
 				+ result.badlines.join("\n")
@@ -481,7 +483,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param metrics_to_query
 	 */
 	void theFollowingProjectMetricsHaveTheFollowingValue(Map<String, Float> metrics_to_query){
-		SonarWebServiceAPI.containsMetrics(SONAR_URL, moduleName, metrics_to_query.sort())
+		sonarAPI.containsMetrics(moduleName, metrics_to_query.sort())
 	}
 
 	/**
@@ -491,7 +493,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param metrics_to_query
 	 */
 	void theFollowingFileMetricsHaveTheFollowingValue(String file ,Map<String, Float> metrics_to_query){
-		SonarWebServiceAPI.containsMetrics(SONAR_URL, "$moduleName:$file", metrics_to_query.sort())
+		sonarAPI.containsMetrics("$moduleName:$file", metrics_to_query.sort())
 	}
 
 	/**
@@ -501,7 +503,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param profile
 	 */
 	void deactivateAllRules(String language, String profile){
-		SonarWebServiceAPI.deactivateAllRules(SONAR_URL, language, profile)
+		sonarAPI.deactivateAllRules(language, profile)
 	}
 
 	/**
@@ -510,7 +512,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param language
 	 */
 	void resetDefaultProfile(String language){
-		SonarWebServiceAPI.resetDefaultProfile(SONAR_URL, language)
+		sonarAPI.resetDefaultProfile(language)
 	}
 
 	/**
@@ -521,7 +523,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param repository
 	 */
 	void activateRepositoryRules(String language, String profile, String repository){
-		SonarWebServiceAPI.activateRepositoryRules(SONAR_URL, language, profile, repository)
+		sonarAPI.activateRepositoryRules(language, profile, repository)
 	}
 
 	/**
@@ -531,7 +533,7 @@ class FunctionalSpecBase extends Specification {
 	 */
 	boolean isWebuiUp(){
 		try {
-			SonarWebServiceAPI.getResponseCode(SONAR_URL) == 200
+			sonarAPI.getResponseCode() == 200
 		} catch (ConnectException e){ false }
 	}
 
@@ -542,7 +544,7 @@ class FunctionalSpecBase extends Specification {
 	 */
 	boolean isWebuiDown(){
 		try {
-			return SonarWebServiceAPI.getResponseCode(SONAR_URL) != 200
+			return sonarAPI.getResponseCode() != 200
 		}
 		catch (ConnectException e){ true }
 	}

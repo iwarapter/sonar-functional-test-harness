@@ -74,16 +74,107 @@ class FunctionalSpecBaseSpec extends Specification {
 		"Linux"		| "x86"		| 'bin/linux-x86-32/sonar.sh'
 	}
 
+	def "isWebuiUp"(){
+		given:
+		SonarWebServiceAPI sonarAPI = Mock()
+		spec.sonarAPI = sonarAPI
+
+		when:
+		1 * sonarAPI.getResponseCode() >> 200
+
+		then:
+		spec.isWebuiUp()
+
+		when:
+		sonarAPI.getResponseCode() >> 404
+
+		then:
+		!spec.isWebuiUp()
+	}
+
+
+	def "isWebuiDown"(){
+		given:
+		SonarWebServiceAPI sonarAPI = Mock()
+		spec.sonarAPI = sonarAPI
+
+		when:
+		1 * sonarAPI.getResponseCode() >> 404
+
+		then:
+		spec.isWebuiDown()
+
+		when:
+		sonarAPI.getResponseCode() >> 200
+
+		then:
+		!spec.isWebuiDown()
+	}
+
+	@Unroll
+	def "wait for sonar up"(){
+		given:
+		SonarWebServiceAPI sonarAPI = Mock()
+		spec.sonarAPI = sonarAPI
+
+		sonarAPI.getResponseCode() >> responseCode
+
+		expect:
+		spec.waitForSonar(timeout) == result
+
+		where:
+		result  | timeout 	| responseCode
+		true	| 5			| 200
+		false	| 5			| 404
+	}
+
+	@Unroll
+	def "wait for sonar down"(){
+		given:
+		SonarWebServiceAPI sonarAPI = Mock()
+		spec.sonarAPI = sonarAPI
+
+		sonarAPI.getResponseCode() >> responseCode
+
+		expect:
+		spec.waitForSonarDown(timeout) == result
+
+		where:
+		result  | timeout 	| responseCode
+		true	| 5			| 404
+		false	| 5			| 200
+	}
+
 	def "install plugin"(){
 		when:
 		spec.SONAR_HOME = new File('').absolutePath
-		spec.PLUGIN_DIR = 'build/resources/main/pluginDir'
-		spec.JAR_DIR = 'build/resources/main/jarDir'
+		spec.PLUGIN_DIR = 'build/resources/test/pluginDir'
+		spec.JAR_DIR = 'build/resources/test/jarDir'
 		spec.PLUGIN_NAME_REGEX = ~/.*sonar-(old)?e?E?xample-plugin-[0-9.]*(-SNAPSHOT)?\.jar/
 		spec.installPlugin()
 
 		then:
 		noExceptionThrown()
 		new File(spec.PLUGIN_DIR, 'sonar-example-plugin-0.1.jar').isFile()
+	}
+
+	def "check server log passes a good log"(){
+		when:
+		def mockFile = new File(getClass().getResource('/logs/good.log').toURI())
+		FunctionalSpecBase spec2 = Spy(FunctionalSpecBase){ sonarLog() >> mockFile  }
+
+		then:
+		spec2.checkServerLogs()
+		noExceptionThrown()
+	}
+
+	def "check server log fails a bad log"(){
+		when:
+		def mockFile = new File(getClass().getResource('/logs/bad.log').toURI())
+		FunctionalSpecBase spec2 = Spy(FunctionalSpecBase){ sonarLog() >> mockFile  }
+		spec2.checkServerLogs()
+
+		then:
+		thrown(AssertionError)
 	}
 }
