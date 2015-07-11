@@ -163,7 +163,7 @@ class FunctionalSpecBase extends Specification {
 		File jarDir = new File( JAR_DIR)
 		File[] jarFiles = findFiles(jarDir, PLUGIN_NAME_REGEX)
 
-		if(jarFiles != null || jarFiles.size()){
+		if(jarFiles != null && jarFiles.size() != 0 ){
 
 			log.info("Installing plugin")
 			File pluginDir = new File(SONAR_HOME, PLUGIN_DIR)

@@ -145,6 +145,19 @@ class FunctionalSpecBaseSpec extends Specification {
 		false	| 5			| 200
 	}
 
+	def "no plugin is installed when cant find one"(){
+		when:
+		spec.SONAR_HOME = new File('').absolutePath
+		spec.PLUGIN_DIR = 'build/resources/test/pluginDir'
+		spec.JAR_DIR = 'build/resources/test/jarDir'
+		spec.PLUGIN_NAME_REGEX = ~/wrong/
+		spec.installPlugin()
+
+		then:
+		noExceptionThrown()
+		!new File(spec.PLUGIN_DIR, 'sonar-example-plugin-0.1.jar').isFile()
+	}
+
 	def "install plugin"(){
 		when:
 		spec.SONAR_HOME = new File('').absolutePath
