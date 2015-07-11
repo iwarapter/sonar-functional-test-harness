@@ -35,15 +35,15 @@ bintray {
 	publish = true //If version should be auto published after an upload
 
 	pkg {
-		repo = 'tbc'
-		name = 'tbc'
+		repo = 'sonar-plugins'
+		name = 'sonar-functional-test-harness'
 
-		desc = 'tbc'
-		websiteUrl = 'tbc'
-		issueTrackerUrl = 'tbc'
-		vcsUrl = 'tbc'
+		desc = 'Functional testing harness for SonarQube plugins.'
+		websiteUrl = 'https://github.com/iwarapter/sonar-functional-test-harness'
+		issueTrackerUrl = 'https://github.com/iwarapter/sonar-functional-test-harness/issues'
+		vcsUrl = 'https://github.com/iwarapter/sonar-functional-test-harness.git'
 		licenses = ['MIT']
-		labels = ['sonar', 'sonarqube']
+		labels = ['sonar', 'sonarqube', 'testing']
 		publicDownloadNumbers = true
 
 		version {
