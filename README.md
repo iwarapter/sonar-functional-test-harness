@@ -33,7 +33,7 @@ See the [wiki] for examples!
 
 Running Tests
 -------------
-The library is capable of starting a SonarQube server is one is not up when the tests are started. To use this you must set the SONAR_HOME environment variable. Otherwise the tests will be ran against the available SonarQube server.
+The library is capable of starting a SonarQube server if one is not up when the tests are started. To use this you must set the SONAR_HOME environment variable. Otherwise the tests will be ran against an available SonarQube server.
 
 [Spock]:http://spockframework.org/
 [SonarQube]:http://www.sonarqube.org/
