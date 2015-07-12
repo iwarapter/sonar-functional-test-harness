@@ -49,9 +49,6 @@ class FunctionalSpecBase extends Specification {
 	protected static boolean didSonarStart
 
 	protected static String SONAR_URL = "http://localhost:9000"
-	protected static String JAR_DIR = 'build/libs/'
-	protected static String PLUGIN_DIR = 'extensions/plugins/'
-	protected static String PLUGIN_NAME_REGEX = ''
 	protected static String SONAR_HOME = ''
 
 	protected static SonarRunnerResult sonarRunnerResult
@@ -98,7 +95,6 @@ class FunctionalSpecBase extends Specification {
 			if (SONAR_HOME) {
 				if (isInstalled()) {
 					cleanServerLog()
-					installPlugin()
 					assert startSonar() : "Cannot start SonarQube from $SONAR_HOME exiting."
 					didSonarStart = true
 					checkServerLogs()
@@ -152,35 +148,6 @@ class FunctionalSpecBase extends Specification {
 	 */
 	void cleanServerLog(){
 		sonarLog().delete()
-	}
-
-	/**
-	 * Copies a plugin from the {@link #JAR_DIR} to the {@link #PLUGIN_DIR}
-	 *
-	 * @param sonarhome
-	 */
-	void installPlugin(){
-		File jarDir = new File( JAR_DIR)
-		File[] jarFiles = findFiles(jarDir, PLUGIN_NAME_REGEX)
-
-		if(jarFiles != null && jarFiles.size() != 0 ){
-
-			log.info("Installing plugin")
-			File pluginDir = new File(SONAR_HOME, PLUGIN_DIR)
-
-			for(File f : findFiles(pluginDir, PLUGIN_NAME_REGEX)){
-				log.info("Removing: " + f.getAbsoluteFile())
-				f.delete()
-			}
-
-			for(File f : jarFiles) {
-				log.info("Copying ${f.name} to $pluginDir")
-				FileUtils.copyFileToDirectory(f, pluginDir)
-			}
-		}
-		else {
-			log.warn("No plugin detected to install")
-		}
 	}
 
 	/**
@@ -261,7 +228,7 @@ class FunctionalSpecBase extends Specification {
 	 * @param sonarHome
 	 */
 	boolean stopSonar(){
-		log.info "Stopping SonarQube\n ${startScript()}"
+		log.info "Stopping SonarQube\n ${stopScript()}"
 		def cmd = stopScript().execute()
 		cmd.waitFor()
 		cmd.exitValue() == 0

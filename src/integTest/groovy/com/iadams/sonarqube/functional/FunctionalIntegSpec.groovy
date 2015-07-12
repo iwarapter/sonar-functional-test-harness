@@ -29,10 +29,6 @@ package com.iadams.sonarqube.functional
  */
 class FunctionalIntegSpec extends FunctionalSpecBase {
 
-	def setupSpec(){
-		PLUGIN_NAME_REGEX = ''
-	}
-
 	def "all directories/files are created"(){
 		expect:
 		projectDir.isDirectory()
