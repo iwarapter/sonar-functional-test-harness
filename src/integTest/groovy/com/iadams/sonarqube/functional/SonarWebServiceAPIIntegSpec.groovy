@@ -31,36 +31,46 @@ import spock.lang.Specification
  */
 class SonarWebServiceAPIIntegSpec extends Specification {
 
-	SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
+    SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
 
-	def "DeactivateAllRules"() {
-		expect:
-		sonarAPI.deactivateAllRules('java','Sonar way')
-	}
+    def "DeactivateAllRules"() {
+        expect:
+        sonarAPI.deactivateAllRules('java', 'Sonar way')
+    }
 
-	def "ActivateRepositoryRules"() {
-		expect:
-		sonarAPI.activateRepositoryRules('java','Sonar way', 'common-java')
-	}
+    def "ActivateRepositoryRules"() {
+        expect:
+        sonarAPI.activateRepositoryRules('java', 'Sonar way', 'common-java')
+    }
 
-	def "ResetDefaultProfile"() {
-		expect:
-		sonarAPI.resetDefaultProfile('java')
-	}
+    def "ResetDefaultProfile"() {
+        expect:
+        sonarAPI.resetDefaultProfile('java')
+    }
 
-	def "cannot find profile key"(){
-		when:
-		sonarAPI.profileKey('monkey', 'wrench')
+    def "cannot find profile key"() {
+        when:
+        sonarAPI.profileKey('monkey', 'wrench')
 
-		then:
-		thrown( FunctionalSpecException )
-	}
+        then:
+        thrown(FunctionalSpecException)
+    }
 
-	def "we can post to the project delete web service"(){
-		when:
-		sonarAPI.deleteProject('we-can-query-files-projects-as-part-of-a-test')
+    def "we can post to the project delete web service"() {
+        when:
+        sonarAPI.deleteProject('we-can-query-files-projects-as-part-of-a-test')
 
-		then:
-		noExceptionThrown()
-	}
+        then:
+        noExceptionThrown()
+    }
+
+    def "activate single rule"() {
+        expect:
+        sonarAPI.activateRule('squid:StringEqualityComparisonCheck', 'java', 'Sonar way')
+    }
+
+    def "deactivate single rule"() {
+        expect:
+        sonarAPI.deactivateRule('squid:StringEqualityComparisonCheck', 'java', 'Sonar way')
+    }
 }

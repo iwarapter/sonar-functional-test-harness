@@ -35,172 +35,226 @@ import groovyx.net.http.Method
 @Slf4j
 class SonarWebServiceAPI {
 
-	HTTPBuilder http
+    HTTPBuilder http
 
-	SonarWebServiceAPI(){
-		this.http = new HTTPBuilder('http://localhost:9000')
-	}
+    SonarWebServiceAPI() {
+        this.http = new HTTPBuilder('http://localhost:9000')
+    }
 
-	SonarWebServiceAPI(String url){
-		this.http = new HTTPBuilder(url)
-	}
+    SonarWebServiceAPI(String url) {
+        this.http = new HTTPBuilder(url)
+    }
 
-	/**
-	 * Returns the response code for the target URL.
-	 *
-	 * @param url
-	 * @return
-	 * @throws ConnectException
-	 */
-	int getResponseCode() throws ConnectException {
+    /**
+     * Returns the response code for the target URL.
+     *
+     * @param url
+     * @return
+     * @throws ConnectException
+     */
+    int getResponseCode() throws ConnectException {
 
-		int code
-		http.get( path:'') { response ->
-			code = response.statusLine.statusCode
-		}
-		code
-	}
+        int code
+        http.get(path: '') { response ->
+            code = response.statusLine.statusCode
+        }
+        code
+    }
 
-	/**
-	 * Queries and asserts the contents of given metrics.
-	 *
-	 * @param url
-	 * @param project
-	 * @param metrics_to_query
-	 * @throws FunctionalSpecException
-	 */
-	void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException{
+    /**
+     * Queries and asserts the contents of given metrics.
+     *
+     * @param url
+     * @param project
+     * @param metrics_to_query
+     * @throws FunctionalSpecException
+     */
+    void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException {
 
-		log.info("Querying the following metrics: $metrics_to_query")
+        log.info("Querying the following metrics: $metrics_to_query")
 
-		try {
-			log.info "Query String: ${http.uri}/api/resources?resouce=${project}&metrics=${metrics_to_query.keySet().join(',')}"
-			def resp = http.get(path: '/api/resources', query: [resource: project, metrics: metrics_to_query.keySet().join(',')])
+        try {
+            log.info "Query String: ${http.uri}/api/resources?resouce=${project}&metrics=${metrics_to_query.keySet().join(',')}"
+            def resp = http.get(path: '/api/resources', query: [resource: project, metrics: metrics_to_query.keySet().join(',')])
 
-			Map<String, Float> results = [:]
-			resp.'msr'[0].each{
-				results.put(it.key, it.val)
-			}
+            Map<String, Float> results = [:]
+            resp.'msr'[0].each {
+                results.put(it.key, it.val)
+            }
 
-			assert metrics_to_query.equals(results) : "Expected:\n$metrics_to_query\nReceived:\n$results\n\n" + metrics_to_query.minus(metrics_to_query.intersect(results))
-		}
-		catch( HttpResponseException e){
-			throw new FunctionalSpecException("Cannot query the metrics, details: ${e.message}", e)
-		}
-	}
+            assert metrics_to_query.equals(results): "Expected:\n$metrics_to_query\nReceived:\n$results\n\n" + metrics_to_query.minus(metrics_to_query.intersect(results))
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot query the metrics, details: ${e.message}", e)
+        }
+    }
 
-	/**
-	 * Activates all the rules for a specified repository in a given language profile.
-	 *
-	 * @param url
-	 * @param language
-	 * @param profile
-	 * @param repository
-	 * @throws FunctionalSpecException
-	 */
-	void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException{
+    /**
+     * Activates all the rules for a specified repository in a given language profile.
+     *
+     * @param url
+     * @param language
+     * @param profile
+     * @param repository
+     * @throws FunctionalSpecException
+     */
+    void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException {
 
-		log.info("Activate all rules in $language:$profile repository: $repository")
+        log.info("Activate all rules in $language:$profile repository: $repository")
 
-		try {
-			String key = profileKey(language, profile)
-			http.request(Method.POST){ req->
-				uri.path = '/api/qualityprofiles/activate_rules'
-				uri.query = [ profile_key: key , repositories: repository]
-				headers.'Authorization' =
-						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
-			}
-			log.info("All rules in $language:$profile repository: $repository activated.")
-		}
-		catch( HttpResponseException e){
-			throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
-		}
-	}
+        try {
+            String key = profileKey(language, profile)
+            http.request(Method.POST) { req ->
+                uri.path = '/api/qualityprofiles/activate_rules'
+                uri.query = [profile_key: key, repositories: repository]
+                headers.'Authorization' =
+                        "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+            }
+            log.info("All rules in $language:$profile repository: $repository activated.")
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
+        }
+    }
 
-	/**
-	 * Deactivates all the rules in a given language profile.
-	 *
-	 * @param url
-	 * @param language
-	 * @param profile
-	 */
-	void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
-		log.info("Deactivate all rules in profile: $language:$profile")
+    /**
+     * Activate a specific rule in a given language profile.
+     *
+     * @param rule
+     * @param language
+     * @param profile
+     * @throws FunctionalSpecException
+     */
+    void activateRule(String rule, String language, String profile) throws FunctionalSpecException {
 
-		try {
-			String key = profileKey(language, profile)
-			http.request(Method.POST){ req->
-				uri.path = '/api/qualityprofiles/deactivate_rules'
-				uri.query = [ profile_key: key ]
-				headers.'Authorization' =
-						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
-			}
-			log.info("All rules in $language:$profile deactivated.")
-		}
-		catch( HttpResponseException e){
-			throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
-		}
-	}
+        log.info("Activate rule $rule in $language:$profile")
 
-	/**
-	 * Restores the default profiles for the given language.
-	 *
-	 * @param url
-	 * @param language
-	 * @throws FunctionalSpecException
-	 */
-	void resetDefaultProfile(String language) throws FunctionalSpecException {
-		log.info("Resetting default profiles for: $language")
-		try {
-			http.request(Method.POST){ req->
-				uri.path = '/api/qualityprofiles/restore_built_in'
-				uri.query = [ language: language ]
-				headers.'Authorization' =
-						"Basic ${"admin:admin".bytes.encodeBase64().toString()}"
-			}
-			log.info("Reset default profiles for: $language")
-		}
-		catch( HttpResponseException e){
-			throw new FunctionalSpecException("Cannot restore built in profile, details: ${e.message}", e)
-		}
-	}
+        try {
+            String key = profileKey(language, profile)
+            http.request(Method.POST) { req ->
+                uri.path = '/api/qualityprofiles/activate_rule'
+                uri.query = [profile_key: key, rule_key: rule]
+                headers.'Authorization' =
+                        "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+            }
+            log.info("Activated rule: $rule in $language:$profile")
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot activate the rule: $rule, details: ${e.message}", e)
+        }
+    }
 
-	/**
-	 * Returns the key for the given language / profile.
-	 *
-	 * @param url
-	 * @param language
-	 * @param profile
-	 * @return The profile key.
-	 * @throws FunctionalSpecException
-	 */
-	String profileKey(String language, String profile) throws FunctionalSpecException {
-		log.info("Finding profile key for $language:$profile")
+    /**
+     * Deactivate a specific rule in a given language profile.
+     *
+     * @param rule
+     * @param language
+     * @param profile
+     * @throws FunctionalSpecException
+     */
+    void deactivateRule(String rule, String language, String profile) throws FunctionalSpecException {
 
-		def resp = http.get(path: '/api/rules/app')
-		for(i in resp.qualityprofiles){
-			if(i.lang == language && i.name == profile){
-				return i.key
-			}
-		}
+        log.info("Deactivate rule $rule in $language:$profile")
 
-		throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
-	}
+        try {
+            String key = profileKey(language, profile)
+            http.request(Method.POST) { req ->
+                uri.path = '/api/qualityprofiles/deactivate_rule'
+                uri.query = [profile_key: key, rule_key: rule]
+                headers.'Authorization' =
+                        "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+            }
+            log.info("Deactivated rule: $rule in $language:$profile")
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot deactivate the rule: $rule, details: ${e.message}", e)
+        }
+    }
 
-	/**
-	 * Attempts to delete a project, returns the statusCode.
-	 *
-	 * @param project
-	 * @return
-	 */
-	void deleteProject(String project){
-		log.info "Attempting to delete project: $project"
+    /**
+     * Deactivates all the rules in a given language profile.
+     *
+     * @param url
+     * @param language
+     * @param profile
+     */
+    void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
+        log.info("Deactivate all rules in profile: $language:$profile")
 
-		try {
-			http.post(path: '/api/projects/destroy', query: [id: project], headers: [Authorization: "Basic ${"admin:admin".bytes.encodeBase64().toString()}"])
-			log.info "Successfully deleted project: $project"
-		} catch (HttpResponseException e){
-			log.warn "Failed to delete project: $project"
-		}
-	}
+        try {
+            String key = profileKey(language, profile)
+            http.request(Method.POST) { req ->
+                uri.path = '/api/qualityprofiles/deactivate_rules'
+                uri.query = [profile_key: key]
+                headers.'Authorization' =
+                        "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+            }
+            log.info("All rules in $language:$profile deactivated.")
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Restores the default profiles for the given language.
+     *
+     * @param url
+     * @param language
+     * @throws FunctionalSpecException
+     */
+    void resetDefaultProfile(String language) throws FunctionalSpecException {
+        log.info("Resetting default profiles for: $language")
+        try {
+            http.request(Method.POST) { req ->
+                uri.path = '/api/qualityprofiles/restore_built_in'
+                uri.query = [language: language]
+                headers.'Authorization' =
+                        "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+            }
+            log.info("Reset default profiles for: $language")
+        }
+        catch (HttpResponseException e) {
+            throw new FunctionalSpecException("Cannot restore built in profile, details: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Returns the key for the given language / profile.
+     *
+     * @param url
+     * @param language
+     * @param profile
+     * @return The profile key.
+     * @throws FunctionalSpecException
+     */
+    String profileKey(String language, String profile) throws FunctionalSpecException {
+        log.info("Finding profile key for $language:$profile")
+
+        def resp = http.get(path: '/api/rules/app')
+        for (i in resp.qualityprofiles) {
+            if (i.lang == language && i.name == profile) {
+                return i.key
+            }
+        }
+
+        throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
+    }
+
+    /**
+     * Attempts to delete a project, returns the statusCode.
+     *
+     * @param project
+     * @return
+     */
+    void deleteProject(String project) {
+        log.info "Attempting to delete project: $project"
+
+        try {
+            http.post(path: '/api/projects/destroy', query: [id: project], headers: [Authorization: "Basic ${"admin:admin".bytes.encodeBase64().toString()}"])
+            log.info "Successfully deleted project: $project"
+        } catch (HttpResponseException e) {
+            log.warn "Failed to delete project: $project"
+        }
+    }
 }
