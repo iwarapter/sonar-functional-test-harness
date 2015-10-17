@@ -32,10 +32,10 @@ import groovy.util.logging.Slf4j
 @Slf4j
 final class SonarRunnerHelper {
 
-	static SonarRunnerResult runSonarRunner(String args = "", File targetDir) {
-		log.info "Executing: sonar-runner $args"
-		def cmd = "sonar-runner $args".execute(null, targetDir)
-		cmd.waitFor()
-		return new SonarRunnerResult(cmd.exitValue(), cmd.err.text ,cmd.text)
-	}
+  static SonarRunnerResult runSonarRunner(String args = "", File targetDir) {
+    log.info "Executing: sonar-runner $args"
+    def cmd = "sonar-runner $args".execute(null, targetDir)
+    cmd.waitFor()
+    return new SonarRunnerResult(cmd.exitValue(), cmd.err.text, cmd.text)
+  }
 }

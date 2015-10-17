@@ -34,15 +34,15 @@ import groovy.util.logging.Slf4j
 @Slf4j
 final class SonarRunnerResult {
 
-	int exitValue = 0
-	String output = ""
-	String error = ""
+  int exitValue = 0
+  String output = ""
+  String error = ""
 
-	SonarRunnerResult(int exitValue, String error, String output){
-		this.exitValue = exitValue
-		this.error = error
-		this.output = output
-		log.info output
-		log.info error
-	}
+  SonarRunnerResult(int exitValue, String error, String output) {
+    this.exitValue = exitValue
+    this.error = error
+    this.output = output
+    log.info output
+    log.info error
+  }
 }

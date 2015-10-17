@@ -30,11 +30,11 @@ package com.iadams.sonarqube.functional
  * Custom Exception for failures initiating functional tests.
  */
 class FunctionalSpecException extends Exception {
-	FunctionalSpecException(String message, Throwable cause) {
-		super(message, cause)
-	}
+  FunctionalSpecException(String message, Throwable cause) {
+    super(message, cause)
+  }
 
-	FunctionalSpecException(String message) {
-		super(message)
-	}
+  FunctionalSpecException(String message) {
+    super(message)
+  }
 }

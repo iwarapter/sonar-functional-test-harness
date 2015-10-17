@@ -28,104 +28,107 @@ package com.iadams.sonarqube.functional
  */
 class FunctionalIntegSpec extends FunctionalSpecBase {
 
-    def "all directories/files are created"() {
-        expect:
-        projectDir.isDirectory()
-        sonarProjectFile.text.contains('all-directories-files-are-created')
-    }
+  def "all directories/files are created"() {
+    expect:
+    projectDir.isDirectory()
+    sonarProjectFile.text.contains('all-directories-files-are-created')
+  }
 
-    def "we can copy resources"() {
-        when:
-        copyResources('HelloWorld.java', 'HelloWorld.java')
-        directory('new-folder')
+  def "we can copy resources"() {
+    when:
+    copyResources('HelloWorld.java', 'HelloWorld.java')
+    directory('new-folder')
 
-        then:
-        new File(projectDir, 'HelloWorld.java').isFile()
-        new File(projectDir, 'new-folder').isDirectory()
-    }
+    then:
+    new File(projectDir, 'HelloWorld.java').isFile()
+    new File(projectDir, 'new-folder').isDirectory()
+  }
 
-    def "we can run sonar-runner as part of a test"() {
-        when:
-        runSonarRunner()
+  def "we can run sonar-runner as part of a test"() {
+    when:
+    runSonarRunner()
 
-        then:
-        analysisFinishedSuccessfully()
+    then:
+    analysisFinishedSuccessfully()
 
-        when:
-        runSonarRunnerWithArguments('-X')
+    when:
+    runSonarRunnerWithArguments('-X')
 
-        then:
-        analysisFinishedSuccessfully()
-        analysisLogContains('.*DEBUG - .*')
-    }
+    then:
+    analysisFinishedSuccessfully()
+    analysisLogContains('.*DEBUG - .*')
+  }
 
-    def "we can run sonar-runner"() {
-        when:
-        runSonarRunner()
+  def "we can run sonar-runner"() {
+    when:
+    runSonarRunner()
 
-        then:
-        analysisFinishedSuccessfully()
-        analysisLogDoesNotContainErrorsOrWarnings()
-    }
+    then:
+    analysisFinishedSuccessfully()
+    analysisLogDoesNotContainErrorsOrWarnings()
+  }
 
-    def "we can detect and error in analysis"() {
-        given:
-        file("broken.java") << "dsasdagdadg"
+  def "we can detect and error in analysis"() {
+    given:
+    file("broken.java") << "dsasdagdadg"
 
-        when:
-        runSonarRunner()
+    when:
+    runSonarRunner()
 
-        then:
-        analysisLogContainsErrorsOrWarnings()
-        analysisFailed()
-    }
+    then:
+    analysisLogContainsErrorsOrWarnings()
+    analysisFailed()
+  }
 
-    def "we can break an analysis"() {
-        when: 'i add garbage to the sonar project properties file and run an analysis'
-        sonarProjectFile << 'sonar.language=KDHFkjadfkjsdf'
-        runSonarRunner()
+  def "we can break an analysis"() {
+    when: 'i add garbage to the sonar project properties file and run an analysis'
+    sonarProjectFile << 'sonar.language=KDHFkjadfkjsdf'
+    runSonarRunner()
 
-        then:
-        analysisFailed()
-        analysisLogContains("ERROR: Caused by: You must install a plugin that supports the language 'KDHFkjadfkjsdf'")
-    }
+    then:
+    analysisFailed()
+    analysisLogContains("ERROR: Caused by: You must install a plugin that supports the language 'KDHFkjadfkjsdf'")
+  }
 
-    def "we can query projects metrics as part of a test"() {
-        given:
-        runSonarRunner()
+  def "we can query projects metrics as part of a test"() {
+    given:
+    file('HelloWorld.java') << getClass().getResource("/HelloWorld.java").text
 
-        expect:
-        theFollowingProjectMetricsHaveTheFollowingValue([violations: 0, sqale_index: 0])
-    }
+    when:
+    runSonarRunner()
 
-    def "we can query a files metrics during a test"() {
-        given:
-        file('HelloWorld.java') << getClass().getResource("/HelloWorld.java").text
+    then:
+    theFollowingProjectMetricsHaveTheFollowingValue([violations: 4, sqale_index: 52])
+  }
 
-        when:
-        runSonarRunner()
+  def "we can query a files metrics during a test"() {
+    given:
+    file('HelloWorld.java') << getClass().getResource("/HelloWorld.java").text
 
-        then:
-        theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc: 5, lines: 31])
-    }
+    when:
+    runSonarRunner()
 
-    def "we can change profile configurations"() {
-        when:
-        deactivateAllRules('java', 'Sonar way')
+    then:
+    theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc: 5, lines: 31])
+  }
 
-        then:
-        noExceptionThrown()
+  def "we can change profile configurations"() {
+    when:
+    deactivateAllRules('java', 'Sonar way')
 
-        when:
-        activateRepositoryRules('java', 'Sonar way', 'common-java')
+    then:
+    noExceptionThrown()
 
-        then:
-        noExceptionThrown()
+    when:
+    activateRepositoryRules('java', 'Sonar way', 'common-java')
 
-        when:
-        resetDefaultProfile('java')
+    then:
+    noExceptionThrown()
 
-        then:
-        noExceptionThrown()
-    }
+    when:
+    resetDefaultProfile('java')
+
+    then:
+    noExceptionThrown()
+  }
 }

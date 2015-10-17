@@ -31,9 +31,9 @@ package com.iadams.sonarqube.functional
  */
 final class LogAnalysisResult {
 
-	int errors = 0
-	int warnings = 0
-	def badlines = []
+  int errors = 0
+  int warnings = 0
+  def badlines = []
 
-	LogAnalysisResult(){}
+  LogAnalysisResult() {}
 }

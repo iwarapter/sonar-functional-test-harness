@@ -32,137 +32,137 @@ import spock.lang.Unroll
  */
 class FunctionalSpecBaseSpec extends Specification {
 
-	FunctionalSpecBase spec
+  FunctionalSpecBase spec
 
-	def setup(){
-		spec = new FunctionalSpecBase()
-		spec.SONAR_HOME = '/path/to/sonar'
-	}
+  def setup() {
+    spec = new FunctionalSpecBase()
+    spec.SONAR_HOME = '/path/to/sonar'
+  }
 
-	def "StartScript"() {
-		given:
-		System.setProperty("os.name", "Mac OS X")
-		System.setProperty("os.arch", "x86_64")
+  def "StartScript"() {
+    given:
+    System.setProperty("os.name", "Mac OS X")
+    System.setProperty("os.arch", "x86_64")
 
-		expect:
-		spec.startScript() == '/path/to/sonar/bin/macosx-universal-64/sonar.sh start'
-	}
+    expect:
+    spec.startScript() == '/path/to/sonar/bin/macosx-universal-64/sonar.sh start'
+  }
 
-	def "StopScript"() {
-		given:
-		System.setProperty("os.name", "Mac OS X")
-		System.setProperty("os.arch", "x86_64")
+  def "StopScript"() {
+    given:
+    System.setProperty("os.name", "Mac OS X")
+    System.setProperty("os.arch", "x86_64")
 
-		expect:
-		spec.stopScript() == '/path/to/sonar/bin/macosx-universal-64/sonar.sh stop'
-	}
+    expect:
+    spec.stopScript() == '/path/to/sonar/bin/macosx-universal-64/sonar.sh stop'
+  }
 
-	@Unroll
-	def "ScriptPath #os #arch"() {
-		given:
-		System.setProperty("os.name", os)
-		System.setProperty("os.arch", arch)
+  @Unroll
+  def "ScriptPath #os #arch"() {
+    given:
+    System.setProperty("os.name", os)
+    System.setProperty("os.arch", arch)
 
-		expect:
-		spec.scriptPath() == output
+    expect:
+    spec.scriptPath() == output
 
-		where:
-		os	 		| arch 		| output
-		"Mac OS X"	| "x86_64"	| 'bin/macosx-universal-64/sonar.sh'
-		"Linux"		| "x86_64"	| 'bin/linux-x86-64/sonar.sh'
-		"Mac OS X"	| "x86"		| 'bin/linux-x86-32/sonar.sh'
-		"Linux"		| "x86"		| 'bin/linux-x86-32/sonar.sh'
-		"Linux"		| "amd64"	| 'bin/linux-x86-64/sonar.sh'
-	}
+    where:
+    os         | arch     | output
+    "Mac OS X" | "x86_64" | 'bin/macosx-universal-64/sonar.sh'
+    "Linux"    | "x86_64" | 'bin/linux-x86-64/sonar.sh'
+    "Mac OS X" | "x86"    | 'bin/linux-x86-32/sonar.sh'
+    "Linux"    | "x86"    | 'bin/linux-x86-32/sonar.sh'
+    "Linux"    | "amd64"  | 'bin/linux-x86-64/sonar.sh'
+  }
 
-	def "isWebuiUp"(){
-		given:
-		SonarWebServiceAPI sonarAPI = Mock()
-		spec.sonarAPI = sonarAPI
+  def "isWebuiUp"() {
+    given:
+    SonarWebServiceAPI sonarAPI = Mock()
+    spec.sonarAPI = sonarAPI
 
-		when:
-		1 * sonarAPI.getResponseCode() >> 200
+    when:
+    1 * sonarAPI.getResponseCode() >> 200
 
-		then:
-		spec.isWebuiUp()
+    then:
+    spec.isWebuiUp()
 
-		when:
-		sonarAPI.getResponseCode() >> 404
+    when:
+    sonarAPI.getResponseCode() >> 404
 
-		then:
-		!spec.isWebuiUp()
-	}
+    then:
+    !spec.isWebuiUp()
+  }
 
 
-	def "isWebuiDown"(){
-		given:
-		SonarWebServiceAPI sonarAPI = Mock()
-		spec.sonarAPI = sonarAPI
+  def "isWebuiDown"() {
+    given:
+    SonarWebServiceAPI sonarAPI = Mock()
+    spec.sonarAPI = sonarAPI
 
-		when:
-		1 * sonarAPI.getResponseCode() >> 404
+    when:
+    1 * sonarAPI.getResponseCode() >> 404
 
-		then:
-		spec.isWebuiDown()
+    then:
+    spec.isWebuiDown()
 
-		when:
-		sonarAPI.getResponseCode() >> 200
+    when:
+    sonarAPI.getResponseCode() >> 200
 
-		then:
-		!spec.isWebuiDown()
-	}
+    then:
+    !spec.isWebuiDown()
+  }
 
-	@Unroll
-	def "wait for sonar up"(){
-		given:
-		SonarWebServiceAPI sonarAPI = Mock()
-		spec.sonarAPI = sonarAPI
+  @Unroll
+  def "wait for sonar up"() {
+    given:
+    SonarWebServiceAPI sonarAPI = Mock()
+    spec.sonarAPI = sonarAPI
 
-		sonarAPI.getResponseCode() >> responseCode
+    sonarAPI.getResponseCode() >> responseCode
 
-		expect:
-		spec.waitForSonar(timeout) == result
+    expect:
+    spec.waitForSonar(timeout) == result
 
-		where:
-		result  | timeout 	| responseCode
-		true	| 5			| 200
-		false	| 5			| 404
-	}
+    where:
+    result | timeout | responseCode
+    true   | 5       | 200
+    false  | 5       | 404
+  }
 
-	@Unroll
-	def "wait for sonar down"(){
-		given:
-		SonarWebServiceAPI sonarAPI = Mock()
-		spec.sonarAPI = sonarAPI
+  @Unroll
+  def "wait for sonar down"() {
+    given:
+    SonarWebServiceAPI sonarAPI = Mock()
+    spec.sonarAPI = sonarAPI
 
-		sonarAPI.getResponseCode() >> responseCode
+    sonarAPI.getResponseCode() >> responseCode
 
-		expect:
-		spec.waitForSonarDown(timeout) == result
+    expect:
+    spec.waitForSonarDown(timeout) == result
 
-		where:
-		result  | timeout 	| responseCode
-		true	| 5			| 404
-		false	| 5			| 200
-	}
+    where:
+    result | timeout | responseCode
+    true   | 5       | 404
+    false  | 5       | 200
+  }
 
-	def "check server log passes a good log"(){
-		when:
-		def mockFile = new File(getClass().getResource('/logs/good.log').toURI())
-		FunctionalSpecBase spec2 = Spy(FunctionalSpecBase){ sonarLog() >> mockFile  }
+  def "check server log passes a good log"() {
+    when:
+    def mockFile = new File(getClass().getResource('/logs/good.log').toURI())
+    FunctionalSpecBase spec2 = Spy(FunctionalSpecBase) { sonarLog() >> mockFile }
 
-		then:
-		spec2.checkServerLogs()
-		noExceptionThrown()
-	}
+    then:
+    spec2.checkServerLogs()
+    noExceptionThrown()
+  }
 
-	def "check server log fails a bad log"(){
-		when:
-		def mockFile = new File(getClass().getResource('/logs/bad.log').toURI())
-		FunctionalSpecBase spec2 = Spy(FunctionalSpecBase){ sonarLog() >> mockFile  }
-		spec2.checkServerLogs()
+  def "check server log fails a bad log"() {
+    when:
+    def mockFile = new File(getClass().getResource('/logs/bad.log').toURI())
+    FunctionalSpecBase spec2 = Spy(FunctionalSpecBase) { sonarLog() >> mockFile }
+    spec2.checkServerLogs()
 
-		then:
-		thrown(AssertionError)
-	}
+    then:
+    thrown(AssertionError)
+  }
 }
