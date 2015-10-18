@@ -98,7 +98,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
     runSonarRunner()
 
     then:
-    theFollowingProjectMetricsHaveTheFollowingValue([violations: 4, sqale_index: 52])
+    theFollowingProjectMetricsHaveTheFollowingValue([violations: 3, sqale_index: 50])
   }
 
   def "we can query a files metrics during a test"() {
@@ -109,7 +109,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
     runSonarRunner()
 
     then:
-    theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc: 5, lines: 31])
+    theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc: 5, lines: 32])
   }
 
   def "we can change profile configurations"() {
