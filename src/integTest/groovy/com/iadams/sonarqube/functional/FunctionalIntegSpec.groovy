@@ -56,7 +56,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     then:
     analysisFinishedSuccessfully()
-    analysisLogContains('DEBUG: ')
+    analysisLogContains('DEBUG')
   }
 
   def "we can run sonar-runner"() {
