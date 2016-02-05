@@ -56,7 +56,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     then:
     analysisFinishedSuccessfully()
-    analysisLogContains('.*DEBUG - .*')
+    analysisLogContains('DEBUG: ')
   }
 
   def "we can run sonar-runner"() {
@@ -87,7 +87,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     then:
     analysisFailed()
-    analysisLogContains("ERROR: Caused by: You must install a plugin that supports the language 'KDHFkjadfkjsdf'")
+    analysisLogContains("You must install a plugin that supports the language 'KDHFkjadfkjsdf'")
   }
 
   def "we can query projects metrics as part of a test"() {

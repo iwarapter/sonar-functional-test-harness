@@ -55,8 +55,8 @@ class FunctionalSpecBase extends Specification {
   protected static SonarRunnerResult sonarRunnerResult
   protected static File analysisLogFile
 
-  private static final String SONAR_ERROR = ".* ERROR .*"
-  private static final String SONAR_WARN = ".* WARN .*"
+  private static final String SONAR_ERROR = "ERROR: .*|.* ERROR .*"
+  private static final String SONAR_WARN = "WARN: .*|.* WARN .*"
   private static
   final String SONAR_WARN_TO_IGNORE_RE = ".*H2 database should.*|.*Starting search|.*Starting web|.*WEB DEVELOPMENT MODE IS ENABLED.*|.*JNA not found. native methods will be disabled.*"
 
@@ -216,7 +216,7 @@ class FunctionalSpecBase extends Specification {
     def cmd = startScript().execute()
     cmd.waitFor()
     cmd.exitValue() == 0
-    waitForSonar(60)
+    waitForSonar(120)
   }
 
   /**
@@ -380,7 +380,7 @@ class FunctionalSpecBase extends Specification {
    */
   boolean analysisLogContains(String line) {
     for (String s : analysisLogFile.readLines()) {
-      if (s.matches(line)) {
+      if (s.contains(line)) {
         return true
       }
     }
