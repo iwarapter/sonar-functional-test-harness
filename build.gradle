@@ -1,3 +1,7 @@
+plugins {
+  id "com.github.hierynomus.license" version "0.14.0"
+}
+
 version = '0.1.8'
 group = 'com.iadams.sonarqube'
 
@@ -5,7 +9,6 @@ apply plugin: 'groovy'
 apply plugin: 'maven-publish'
 apply from: "$rootDir/gradle/jacoco.gradle"
 apply from: "$rootDir/gradle/integTest.gradle"
-apply from: "$rootDir/gradle/license.gradle"
 apply from: "$rootDir/gradle/sonar.gradle"
 apply from: "$rootDir/gradle/publishing.gradle"
 
@@ -32,4 +35,10 @@ test {
   testLogging {
     exceptionFormat "full"
   }
+}
+
+license {
+  header rootProject.file('LICENSE')
+  includes(["**/*.java", "**/*.groovy"])
+  excludes(["com/energizedwork/spock/extensions/TempDirectoryExtension.groovy", "com/energizedwork/spock/extensions/TempDirectory.groovy"])
 }
