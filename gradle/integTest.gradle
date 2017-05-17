@@ -11,6 +11,11 @@ task integTest(type: Test) {
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
 	reports.html.destination = file("$buildDir/reports/integTest")
+
+	testLogging {
+		events "failed"
+		exceptionFormat "full"
+	}
 }
 
 task jacocoIntegTestReport(type: JacocoReport) {
