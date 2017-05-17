@@ -22,55 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.iadams.sonarqube.functional
-
-import spock.lang.Specification
+package com.iadams.sonarqube.functional.beans
 
 /**
  * @author iwarapter
  */
-class SonarWebServiceAPIIntegSpec extends Specification {
+class Measure {
 
-  SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
-
-  def "DeactivateAllRules"() {
-    expect:
-    sonarAPI.deactivateAllRules('java', 'Sonar way')
-  }
-
-  def "ActivateRepositoryRules"() {
-    expect:
-    sonarAPI.activateRepositoryRules('java', 'Sonar way')
-  }
-
-  def "ResetDefaultProfile"() {
-    expect:
-    sonarAPI.resetDefaultProfile('java')
-  }
-
-  def "cannot find profile key"() {
-    when:
-    sonarAPI.profileKey('monkey', 'wrench')
-
-    then:
-    thrown(FunctionalSpecException)
-  }
-
-  def "we can post to the project delete web service"() {
-    when:
-    sonarAPI.deleteProject('we-can-query-files-projects-as-part-of-a-test')
-
-    then:
-    noExceptionThrown()
-  }
-
-  def "activate single rule"() {
-    expect:
-    sonarAPI.activateRule('squid:CallToDeprecatedMethod', 'java', 'Sonar way')
-  }
-
-  def "deactivate single rule"() {
-    expect:
-    sonarAPI.deactivateRule('squid:CallToDeprecatedMethod', 'java', 'Sonar way')
-  }
+  String metric
+  String value
 }

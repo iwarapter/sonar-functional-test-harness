@@ -49,7 +49,7 @@ class FunctionalSpecBase extends Specification {
 
   protected static boolean didSonarStart
 
-  protected static String SONAR_URL = "http://localhost:9000"
+  protected static String SONAR_URL = "http://localhost:9000/"
   protected static String SONAR_HOME = ''
 
   protected static SonarRunnerResult sonarRunnerResult
@@ -490,8 +490,8 @@ class FunctionalSpecBase extends Specification {
    * @param profile
    * @param repository
    */
-  void activateRepositoryRules(String language, String profile, String repository) {
-    sonarAPI.activateRepositoryRules(language, profile, repository)
+  void activateRepositoryRules(String language, String profile) {
+    sonarAPI.activateRepositoryRules(language, profile)
   }
 
   /**

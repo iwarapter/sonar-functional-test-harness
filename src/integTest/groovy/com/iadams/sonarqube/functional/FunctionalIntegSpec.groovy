@@ -120,7 +120,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
     noExceptionThrown()
 
     when:
-    activateRepositoryRules('java', 'Sonar way', 'common-java')
+    activateRepositoryRules('java', 'Sonar way')
 
     then:
     noExceptionThrown()

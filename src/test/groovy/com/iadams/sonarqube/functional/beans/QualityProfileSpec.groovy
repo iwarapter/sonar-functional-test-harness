@@ -22,55 +22,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.iadams.sonarqube.functional
+package com.iadams.sonarqube.functional.beans
 
+import com.google.gson.Gson
 import spock.lang.Specification
 
-/**
- * @author iwarapter
- */
-class SonarWebServiceAPIIntegSpec extends Specification {
+class QualityProfileSpec extends Specification {
 
-  SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
+  Gson gson
 
-  def "DeactivateAllRules"() {
-    expect:
-    sonarAPI.deactivateAllRules('java', 'Sonar way')
+  def setup(){
+    gson = new Gson()
   }
 
-  def "ActivateRepositoryRules"() {
-    expect:
-    sonarAPI.activateRepositoryRules('java', 'Sonar way')
-  }
-
-  def "ResetDefaultProfile"() {
-    expect:
-    sonarAPI.resetDefaultProfile('java')
-  }
-
-  def "cannot find profile key"() {
+  def "we can marshall json to the bean"(){
     when:
-    sonarAPI.profileKey('monkey', 'wrench')
+    QualityProfile profile = gson.fromJson('''{
+    "key": "cs-sonar-way-61064",
+    "name": "Sonar way",
+    "language": "cs",
+    "isDefault": true
+  }''', QualityProfile.class)
 
     then:
-    thrown(FunctionalSpecException)
-  }
+    profile.isDefault == 'true'
+    profile.name == 'Sonar way'
+    profile.language == 'cs'
+    profile.key == 'cs-sonar-way-61064'
 
-  def "we can post to the project delete web service"() {
     when:
-    sonarAPI.deleteProject('we-can-query-files-projects-as-part-of-a-test')
+    profile = gson.fromJson('''{
+    "key": "cs-sonar-way-61064",
+    "name": "Sonar way",
+    "language": "cs",
+    "isDefault": false
+  }''', QualityProfile.class)
 
     then:
-    noExceptionThrown()
-  }
-
-  def "activate single rule"() {
-    expect:
-    sonarAPI.activateRule('squid:CallToDeprecatedMethod', 'java', 'Sonar way')
-  }
-
-  def "deactivate single rule"() {
-    expect:
-    sonarAPI.deactivateRule('squid:CallToDeprecatedMethod', 'java', 'Sonar way')
+    profile.isDefault == 'false'
+    profile.name == 'Sonar way'
+    profile.language == 'cs'
+    profile.key == 'cs-sonar-way-61064'
   }
 }

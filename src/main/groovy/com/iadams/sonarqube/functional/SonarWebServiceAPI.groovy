@@ -24,41 +24,55 @@
  */
 package com.iadams.sonarqube.functional
 
-import groovy.util.logging.Slf4j
-import groovyx.net.http.HTTPBuilder
-import groovyx.net.http.HttpResponseException
-import groovyx.net.http.Method
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.iadams.sonarqube.functional.beans.ComponentResponse
+import com.iadams.sonarqube.functional.beans.QualityProfile
+import com.iadams.sonarqube.functional.beans.SearchQualityProfileResponse
+import okhttp3.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-/**
- * @author iwarapter
- */
-@Slf4j
 class SonarWebServiceAPI {
 
-  HTTPBuilder http
+  Logger log = LoggerFactory.getLogger(SonarWebServiceAPI.class);
+
+  OkHttpClient client
+  String url = 'http://localhost:9000/'
+
+  String sonarUser = 'admin'
+  String sonarPasswd = 'admin'
+
 
   SonarWebServiceAPI() {
-    this.http = new HTTPBuilder('http://localhost:9000')
+    this.client = new OkHttpClient()
   }
 
   SonarWebServiceAPI(String url) {
-    this.http = new HTTPBuilder(url)
+    this.url = url
+    this.client = new OkHttpClient()
   }
 
+  public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8")
   /**
-   * Returns the response code for the target URL.
-   *
-   * @param url
+   * Returns the response code for a given URL.
    * @return
-   * @throws ConnectException
    */
-  int getResponseCode() throws ConnectException {
+  int getResponseCode() {
 
-    int code
-    http.get(path: '') { response ->
-      code = response.statusLine.statusCode
+    try {
+      Response response = client.newCall(new Request.Builder().url(url).build()).execute()
+
+      return response.code()
     }
-    code
+    catch (IOException e) {
+      log.debug("Unable to GET from url: $url", e)
+      return 404
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("Malformed url: $url", e)
+      return 400
+    }
   }
 
   /**
@@ -69,22 +83,37 @@ class SonarWebServiceAPI {
    * @param metrics_to_query
    * @throws FunctionalSpecException
    */
-  void containsMetrics(String project, Map<String, Float> metrics_to_query) throws FunctionalSpecException {
-
+  void containsMetrics(String component, Map<String, Float> metrics_to_query) throws FunctionalSpecException {
     log.info("Querying the following metrics: $metrics_to_query")
 
-    try {
-      log.info "Query String: ${http.uri}/api/resources?resouce=${project}&metrics=${metrics_to_query.keySet().join(',')}"
-      def resp = http.get(path: '/api/resources', query: [resource: project, metrics: metrics_to_query.keySet().join(',')])
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/measures/component')
+      .addQueryParameter('metricKeys', metrics_to_query.keySet().join(','))
+      .addQueryParameter('componentKey', component)
+      .build()
 
-      Map<String, Float> results = [:]
-      resp.'msr'[0].each {
-        results.put(it.key, it.val)
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .build()
+
+    try {
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 200) {
+        String body = response.body().string()
+        ComponentResponse comp = new Gson().fromJson(body, new TypeToken<ComponentResponse>() {
+        }.getType())
+
+        Map<String, Float> results = [:]
+        comp.component.measures.each {
+          results.put(it.metric, it.value.toInteger())
+        }
+        assert metrics_to_query.equals(results): "Expected:\n$metrics_to_query\nReceived:\n$results\n\n" + metrics_to_query.minus(metrics_to_query.intersect(results))
+        return
       }
 
-      assert metrics_to_query.equals(results): "Expected:\n$metrics_to_query\nReceived:\n$results\n\n" + metrics_to_query.minus(metrics_to_query.intersect(results))
+      throw new FunctionalSpecException("Cannot query the metrics, details: ${response.message()}")
     }
-    catch (HttpResponseException e) {
+    catch (IOException e) {
       throw new FunctionalSpecException("Cannot query the metrics, details: ${e.message}", e)
     }
   }
@@ -98,21 +127,36 @@ class SonarWebServiceAPI {
    * @param repository
    * @throws FunctionalSpecException
    */
-  void activateRepositoryRules(String language, String profile, String repository) throws FunctionalSpecException {
+  void activateRepositoryRules(String language, String profile) throws FunctionalSpecException {
 
-    log.info("Activate all rules in $language:$profile repository: $repository")
+    log.info("Activate all rules in $language:$profile")
+
+    String key = profileKey(language, profile)
+
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/qualityprofiles/activate_rules')
+      .addQueryParameter('profile_key', key)
+      .build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
 
     try {
-      String key = profileKey(language, profile)
-      http.request(Method.POST) { req ->
-        uri.path = '/api/qualityprofiles/activate_rules'
-        uri.query = [profile_key: key, repositories: repository]
-        headers.'Authorization' =
-            "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 200) {
+        log.info("All rules in $language:$profile activated.")
+        return
       }
-      log.info("All rules in $language:$profile repository: $repository activated.")
+
+      throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${response.message()}")
     }
-    catch (HttpResponseException e) {
+    catch (IOException e) {
       throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
     }
   }
@@ -126,20 +170,35 @@ class SonarWebServiceAPI {
    * @throws FunctionalSpecException
    */
   void activateRule(String rule, String language, String profile) throws FunctionalSpecException {
-
     log.info("Activate rule $rule in $language:$profile")
 
+    String key = profileKey(language, profile)
+
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/qualityprofiles/activate_rule')
+      .addQueryParameter('profile_key', key)
+      .addQueryParameter('rule_key', rule)
+      .build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
+
     try {
-      String key = profileKey(language, profile)
-      http.request(Method.POST) { req ->
-        uri.path = '/api/qualityprofiles/activate_rule'
-        uri.query = [profile_key: key, rule_key: rule]
-        headers.'Authorization' =
-            "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 200) {
+        log.info("Rule $rule in $language:$profile activated.")
+        return
       }
-      log.info("Activated rule: $rule in $language:$profile")
+
+      throw new FunctionalSpecException("Cannot activate the rule: $rule, details:${response.message()}")
     }
-    catch (HttpResponseException e) {
+    catch (IOException e) {
       throw new FunctionalSpecException("Cannot activate the rule: $rule, details: ${e.message}", e)
     }
   }
@@ -153,20 +212,35 @@ class SonarWebServiceAPI {
    * @throws FunctionalSpecException
    */
   void deactivateRule(String rule, String language, String profile) throws FunctionalSpecException {
-
     log.info("Deactivate rule $rule in $language:$profile")
 
+    String key = profileKey(language, profile)
+
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/qualityprofiles/deactivate_rule')
+      .addQueryParameter('profile_key', key)
+      .addQueryParameter('rule_key', rule)
+      .build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
+
     try {
-      String key = profileKey(language, profile)
-      http.request(Method.POST) { req ->
-        uri.path = '/api/qualityprofiles/deactivate_rule'
-        uri.query = [profile_key: key, rule_key: rule]
-        headers.'Authorization' =
-            "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 200) {
+        log.info("Rule $rule in $language:$profile deactivated.")
+        return
       }
-      log.info("Deactivated rule: $rule in $language:$profile")
+
+      throw new FunctionalSpecException("Cannot deactivate the rule: $rule, details:${response.message()}")
     }
-    catch (HttpResponseException e) {
+    catch (IOException e) {
       throw new FunctionalSpecException("Cannot deactivate the rule: $rule, details: ${e.message}", e)
     }
   }
@@ -181,18 +255,34 @@ class SonarWebServiceAPI {
   void deactivateAllRules(String language, String profile) throws FunctionalSpecException {
     log.info("Deactivate all rules in profile: $language:$profile")
 
+    String key = profileKey(language, profile)
+
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url)
+      .newBuilder(url + 'api/qualityprofiles/deactivate_rules')
+      .addQueryParameter('profile_key', key)
+      .build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
+
     try {
-      String key = profileKey(language, profile)
-      http.request(Method.POST) { req ->
-        uri.path = '/api/qualityprofiles/deactivate_rules'
-        uri.query = [profile_key: key]
-        headers.'Authorization' =
-            "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 200) {
+        log.info("All rules in $language:$profile deactivated.")
+        return
       }
-      log.info("All rules in $language:$profile deactivated.")
+
+      throw new FunctionalSpecException("Unable to reset default profile: ${response.message}")
     }
-    catch (HttpResponseException e) {
-      throw new FunctionalSpecException("Cannot deactivate all the rules, details: ${e.message}", e)
+    catch (IOException e) {
+      throw new FunctionalSpecException("Cannot restore built in profile, details: ${e.message}", e)
     }
   }
 
@@ -204,17 +294,31 @@ class SonarWebServiceAPI {
    * @throws FunctionalSpecException
    */
   void resetDefaultProfile(String language) throws FunctionalSpecException {
+
     log.info("Resetting default profiles for: $language")
+
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/qualityprofiles/restore_built_in').addQueryParameter('language', language).build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
+
     try {
-      http.request(Method.POST) { req ->
-        uri.path = '/api/qualityprofiles/restore_built_in'
-        uri.query = [language: language]
-        headers.'Authorization' =
-            "Basic ${"admin:admin".bytes.encodeBase64().toString()}"
+      Response response = client.newCall(request).execute()
+
+      if (response.code() == 204) {
+        log.info("Reset default profiles for: $language")
+        return
       }
-      log.info("Reset default profiles for: $language")
+
+      throw new FunctionalSpecException("Unable to reset default profile: ${response.message}")
     }
-    catch (HttpResponseException e) {
+    catch (IOException e) {
       throw new FunctionalSpecException("Cannot restore built in profile, details: ${e.message}", e)
     }
   }
@@ -231,14 +335,25 @@ class SonarWebServiceAPI {
   String profileKey(String language, String profile) throws FunctionalSpecException {
     log.info("Finding profile key for $language:$profile")
 
-    def resp = http.get(path: '/api/rules/app')
-    for (i in resp.qualityprofiles) {
-      if (i.lang == language && i.name == profile) {
-        return i.key
-      }
-    }
+    HttpUrl httpUrl = HttpUrl.parse(url)
+      .newBuilder(url + 'api/qualityprofiles/search')
+      .addQueryParameter('format', 'json')
+      .build()
 
-    throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
+    try {
+      Response response = client.newCall(new Request.Builder().get().url(httpUrl).build()).execute()
+      SearchQualityProfileResponse qualityProfileResponse = new Gson().fromJson(response.body().string(),SearchQualityProfileResponse)
+
+      for (QualityProfile p : qualityProfileResponse.profiles) {
+        if (p.name.equals(profile) && p.language.equals(language)) {
+          return p.key
+        }
+      }
+      throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
+    }
+    catch (IOException e) {
+      throw new FunctionalSpecException("Unable to find default profile for: $language $profile")
+    }
   }
 
   /**
@@ -248,13 +363,36 @@ class SonarWebServiceAPI {
    * @return
    */
   void deleteProject(String project) {
+
     log.info "Attempting to delete project: $project"
 
+    String credential = Credentials.basic(sonarUser, sonarPasswd)
+
+    HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/projects/delete').addQueryParameter('key', project).build()
+
+    RequestBody body = RequestBody.create(JSON, '')
+    Request request = new Request.Builder()
+      .url(httpUrl.toString())
+      .header("Authorization", credential)
+      .post(body)
+      .build()
+
     try {
-      http.post(path: '/api/projects/destroy', query: [id: project], headers: [Authorization: "Basic ${"admin:admin".bytes.encodeBase64().toString()}"])
-      log.info "Successfully deleted project: $project"
-    } catch (HttpResponseException e) {
-      log.warn "Failed to delete project: $project"
+      Response response = client.newCall(request).execute()
+
+      switch (response.code()) {
+        case 404:
+          log.info("Project not found to delete: $project")
+          break
+        case 204:
+          log.info("Successfully deleted project: $project")
+          break
+        default:
+          log.info("Unable to delete project: $project", response.code())
+      }
+    }
+    catch (IOException e) {
+      log.warn("Unable to delete project: $project", e)
     }
   }
 }

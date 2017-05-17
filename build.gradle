@@ -1,4 +1,4 @@
-version = '0.1.7'
+version = '0.1.8'
 group = 'com.iadams.sonarqube'
 
 apply plugin: 'groovy'
@@ -13,14 +13,23 @@ sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
-    jcenter()
+  jcenter()
 }
 
 dependencies {
-    compile 'commons-io:commons-io:2.4'
-    compile 'org.slf4j:slf4j-simple:1.7.12'
-    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
-    compile "org.spockframework:spock-core:1.0-groovy-2.3"
-    testRuntime "cglib:cglib-nodep:3.1"         // allows mocking of classes (in addition to interfaces)
-    testRuntime "org.objenesis:objenesis:2.1"   // allows mocking of classes without default constructor (together with CGLIB)
+  compile 'commons-io:commons-io:2.4'
+  compile 'org.slf4j:slf4j-simple:1.7.12'
+  compile 'com.google.code.gson:gson:2.7'
+  compile 'com.squareup.okhttp3:okhttp:3.4.1'
+  compile "org.spockframework:spock-core:1.0-groovy-2.3"
+
+  testRuntime "cglib:cglib-nodep:3.1" // allows mocking of classes (in addition to interfaces)
+  testRuntime "org.objenesis:objenesis:2.1" // allows mocking of classes without default constructor (together with CGLIB)
+  testCompile 'com.squareup.okhttp3:mockwebserver:3.4.1'
+}
+
+test {
+  testLogging {
+    exceptionFormat "full"
+  }
 }

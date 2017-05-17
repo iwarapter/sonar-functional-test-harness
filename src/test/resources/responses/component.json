@@ -1,0 +1,18 @@
+{
+  "component": {
+    "id": "AVkjhWV848POdwB7CTKe",
+    "key": "puppetlabs-apache",
+    "name": "puppetlabs-apache",
+    "qualifier": "TRK",
+    "measures": [
+      {
+        "metric": "violations",
+        "value": "174"
+      },
+      {
+        "metric": "lines",
+        "value": "5563"
+      }
+    ]
+  }
+}
