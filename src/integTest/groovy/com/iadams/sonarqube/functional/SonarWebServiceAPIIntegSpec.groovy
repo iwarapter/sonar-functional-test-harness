@@ -33,6 +33,10 @@ class SonarWebServiceAPIIntegSpec extends Specification {
 
   SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
 
+  def setupSpec(){
+    waitForSonar(120)
+  }
+
   def "DeactivateAllRules"() {
     expect:
     sonarAPI.deactivateAllRules('java', 'Sonar way')
@@ -72,5 +76,24 @@ class SonarWebServiceAPIIntegSpec extends Specification {
   def "deactivate single rule"() {
     expect:
     sonarAPI.deactivateRule('squid:CallToDeprecatedMethod', 'java', 'Sonar way')
+  }
+
+
+  boolean isWebuiUp() {
+    try {
+      sonarAPI.getResponseCode() == 200
+    } catch (ConnectException e) {
+      false
+    }
+  }
+
+  boolean waitForSonar(int timeout) {
+    for (i in 0..timeout) {
+      if (isWebuiUp()) {
+        return true
+      }
+      sleep(1000)
+    }
+    return false
   }
 }
