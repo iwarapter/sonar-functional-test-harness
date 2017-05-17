@@ -47,6 +47,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
   def "we can run sonar-runner as part of a test"() {
     when:
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     analysisFinishedSuccessfully()
@@ -62,6 +63,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
   def "we can run sonar-runner"() {
     when:
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     analysisFinishedSuccessfully()
@@ -74,6 +76,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     when:
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     analysisLogContainsErrorsOrWarnings()
@@ -84,6 +87,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
     when: 'i add garbage to the sonar project properties file and run an analysis'
     sonarProjectFile << 'sonar.language=KDHFkjadfkjsdf'
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     analysisFailed()
@@ -96,6 +100,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     when:
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     theFollowingProjectMetricsHaveTheFollowingValue([violations: 3, sqale_index: 50])
@@ -107,6 +112,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
 
     when:
     runSonarRunner()
+    sleep(5000) //analysis needs time to be run on server
 
     then:
     theFollowingFileMetricsHaveTheFollowingValue("HelloWorld.java", [ncloc: 5, lines: 32])
