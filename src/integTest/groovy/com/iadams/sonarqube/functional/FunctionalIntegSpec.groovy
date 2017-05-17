@@ -28,6 +28,10 @@ package com.iadams.sonarqube.functional
  */
 class FunctionalIntegSpec extends FunctionalSpecBase {
 
+  def setupSpec(){
+    waitForSonar(120)
+  }
+
   def "all directories/files are created"() {
     expect:
     projectDir.isDirectory()
