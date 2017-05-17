@@ -24,6 +24,7 @@
  */
 package com.iadams.sonarqube.functional
 
+import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -31,9 +32,11 @@ import spock.lang.Specification
  */
 class SonarWebServiceAPIIntegSpec extends Specification {
 
-  SonarWebServiceAPI sonarAPI = new SonarWebServiceAPI()
+  @Shared
+  SonarWebServiceAPI sonarAPI
 
   def setupSpec(){
+    sonarAPI = new SonarWebServiceAPI()
     waitForSonar(120)
   }
 
