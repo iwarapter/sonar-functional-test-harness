@@ -27,7 +27,7 @@ install:
   - wget https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-2.5.zip
   - unzip sonar-scanner-2.5.zip
   - cd -
-  - docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube:${SONARQUBE_VERSION}
+  - docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube:${SONARQUBE_VERSION}-alpine
 
 script:
   - ./gradlew clean build integTest
