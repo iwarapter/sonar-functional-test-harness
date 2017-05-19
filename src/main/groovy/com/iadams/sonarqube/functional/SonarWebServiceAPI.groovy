@@ -33,6 +33,8 @@ import okhttp3.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.TimeUnit
+
 class SonarWebServiceAPI {
 
   Logger log = LoggerFactory.getLogger(SonarWebServiceAPI.class);
@@ -45,12 +47,20 @@ class SonarWebServiceAPI {
 
 
   SonarWebServiceAPI() {
-    this.client = new OkHttpClient()
+    this.client = new OkHttpClient.Builder()
+      .connectTimeout(10, TimeUnit.SECONDS)
+      .writeTimeout(10, TimeUnit.SECONDS)
+      .readTimeout(30, TimeUnit.SECONDS)
+      .build()
   }
 
   SonarWebServiceAPI(String url) {
     this.url = url
-    this.client = new OkHttpClient()
+    this.client = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
   }
 
   public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8")
@@ -138,6 +148,7 @@ class SonarWebServiceAPI {
     HttpUrl httpUrl = HttpUrl.parse(url).newBuilder(url + 'api/qualityprofiles/activate_rules')
       .addQueryParameter('profile_key', key)
       .build()
+    log.debug(httpUrl.toString())
 
     RequestBody body = RequestBody.create(JSON, '')
     Request request = new Request.Builder()
@@ -263,6 +274,7 @@ class SonarWebServiceAPI {
       .newBuilder(url + 'api/qualityprofiles/deactivate_rules')
       .addQueryParameter('profile_key', key)
       .build()
+    log.debug(httpUrl.toString())
 
     RequestBody body = RequestBody.create(JSON, '')
     Request request = new Request.Builder()
@@ -339,6 +351,7 @@ class SonarWebServiceAPI {
       .newBuilder(url + 'api/qualityprofiles/search')
       .addQueryParameter('format', 'json')
       .build()
+    log.debug(httpUrl.toString())
 
     try {
       Response response = client.newCall(new Request.Builder().get().url(httpUrl).build()).execute()

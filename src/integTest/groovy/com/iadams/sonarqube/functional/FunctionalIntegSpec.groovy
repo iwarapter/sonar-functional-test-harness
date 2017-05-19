@@ -107,7 +107,7 @@ class FunctionalIntegSpec extends FunctionalSpecBase {
     sleep(5000) //analysis needs time to be run on server
 
     then:
-    theFollowingProjectMetricsHaveTheFollowingValue([violations: 3, sqale_index: 50])
+    theFollowingProjectMetricsHaveTheFollowingValue([ncloc: 5, complexity: 1])
   }
 
   def "we can query a files metrics during a test"() {
